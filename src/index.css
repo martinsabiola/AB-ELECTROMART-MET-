@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Unique Minimalist Few-Color Theme: All Fonts Grey Except Circuit ID */
+body, 
+body h1:not(.circuit-id-header):not(.circuit-id-text),
+body h2:not(.circuit-id-header):not(.circuit-id-text),
+body h3:not(.circuit-id-header):not(.circuit-id-text),
+body h4:not(.circuit-id-header):not(.circuit-id-text),
+body h5:not(.circuit-id-header):not(.circuit-id-text),
+body h6:not(.circuit-id-header):not(.circuit-id-text),
+body p:not(.circuit-id-header):not(.circuit-id-text),
+body span:not(.circuit-id-header):not(.circuit-id-text):not(.circuit-id-threephase-indicator),
+body div:not(.circuit-id-header):not(.circuit-id-text):not(.circuit-id-input):not(.w-9):not(.h-9),
+body li,
+body strong,
+body label,
+body input:not(.circuit-id-input),
+body select,
+body button,
+body td:not(.circuit-id-cell),
+body th:not(.circuit-id-header),
+body a {
+  color: #94a3b8 !important; /* Neutral slate grey for body text */
+}
+
+/* Clear, bright grey for active, prominent, and bold titles */
+body h1:not(.circuit-id-header):not(.circuit-id-text),
+body h2:not(.circuit-id-header):not(.circuit-id-text),
+body h3:not(.circuit-id-header):not(.circuit-id-text),
+body strong,
+body button:hover {
+  color: #cbd5e1 !important; /* Light slate grey */
+}
+
+/* Muted grey for sub-labels and descriptions to preserve clean visual contrast hierarchy */
+.text-gray-500,
+.text-slate-500,
+.text-zinc-500,
+.text-\[\#718096\],
+.text-\[\#4a5568\] {
+  color: #64748b !important; /* Muted slate grey */
+}
+
+/* Safeguard SVG icons from text color inheritance bugs */
+svg, path, circle, rect, line, polyline, polygon {
+  color: inherit !important;
+}
+
+/* HIGH SPECIFICITY STYLING RESERVED EXCLUSIVELY FOR CIRCUIT ID */
+.circuit-id-header,
+.circuit-id-text {
+  color: #fbbf24 !important; /* Standout Gold/Amber for Circuit ID header */
+  font-weight: 800 !important;
+}
+
+.circuit-id-input-normal {
+  color: #fbbf24 !important; /* Warm Yellow for regular Circuit ID values */
+}
+
+.circuit-id-input-dup {
+  color: #38bdf8 !important; /* Sky Blue for duplicated Circuit ID highlights */
+}
+
+.circuit-id-input-threephase {
+  color: #a855f7 !important; /* Purple for 3-phase circuits */
+}
+
+.circuit-id-threephase-indicator {
+  color: #b794f4 !important; /* Purple prefix indicator */
+}
+
+.bg-cool-obsidian {
+  background-color: #060913;
+}
+
+.border-cool-slate {
+  border-color: #172033;
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Stylish Dropdown Lists (Select & Option) with Dark Background */
+select {
+  background-color: #0d1220 !important;
+  border-color: #1a243a !important;
+  color: #cbd5e1 !important;
+  transition: border-color 0.15s ease-in-out;
+}
+
+select:hover {
+  border-color: #4a5568 !important;
+}
+
+select:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+select option {
+  background-color: #13192a !important;
+  color: #cbd5e0 !important;
+}
+
+/* Global Compact Form Fields with full character visibility */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+select,
+textarea {
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+  border-radius: 4px !important;
+  box-sizing: border-box !important;
+}
+
+/* Extends table nested inputs to be extra compact and legible */
+td input,
+td select {
+  padding-left: 0.25rem !important;
+  padding-right: 0.25rem !important;
+  font-weight: 600 !important;
+}
+
+/* High-Density Engineering Table Column Spacing Reductions */
+table th {
+  padding-left: 0.5rem !important;  /* 8px */
+  padding-right: 0.5rem !important; /* 8px */
+  padding-top: 0.375rem !important; /* 6px */
+  padding-bottom: 0.375rem !important; /* 6px */
+}
+
+table td {
+  padding-left: 0.5rem !important;  /* 8px */
+  padding-right: 0.5rem !important; /* 8px */
+  padding-top: 0.25rem !important;  /* 4px */
+  padding-bottom: 0.25rem !important; /* 4px */
+}
+
+/* Premium Cool Red Theme for All Delete / Trash Buttons */
+button[title*="delete" i],
+button[title*="remove" i],
+button[title*="trash" i] {
+  color: #f43f5e !important; /* Elegant Rose-500 (Cool Red) */
+  background-color: rgba(244, 63, 94, 0.08) !important; /* Soft rose tint */
+  border: 1px solid rgba(244, 63, 94, 0.15) !important;
+  border-radius: 4px !important;
+  padding: 0.25rem !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+button[title*="delete" i]:hover,
+button[title*="remove" i]:hover,
+button[title*="trash" i]:hover {
+  color: #ffffff !important;
+  background-color: #e11d48 !important; /* Rose-600 */
+  border-color: #e11d48 !important;
+  box-shadow: 0 0 12px rgba(225, 29, 72, 0.45) !important;
+  transform: translateY(-1px);
+}
+
+

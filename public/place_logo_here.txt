@@ -1,0 +1,3 @@
+Please upload or drag-and-drop your 'logo.png' file into this directory (the 'public' folder at the root of the project). 
+
+Once you place your 'logo.png' here, the application will automatically load and display it exactly as uploaded, with no edits or scaling!
