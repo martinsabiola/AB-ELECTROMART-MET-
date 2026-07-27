@@ -113,14 +113,18 @@ export default function FireTab({ zones, setZones, settings, setSettings }: Fire
   // File Import Logic
   const handleImportFile = async (file: File, mode: 'append' | 'replace') => {
     try {
+      window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: true }));
+      await new Promise(r => setTimeout(r, 100));
       const res = await parseMEPFile(file, [], settings);
       if (res.fireZones && res.fireZones.length > 0) {
         setZones(prev => mode === 'replace' ? res.fireZones! : [...prev, ...res.fireZones!]);
       }
       window.dispatchEvent(new CustomEvent('trigger-mep-update-workspace', { detail: res }));
-      window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: res.summaryMessage } }));
+      window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: `📥 ${res.summaryMessage}` } }));
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: false, text: 'Import failed: ' + (err.message || 'invalid file') } }));
+    } finally {
+      window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: false }));
     }
   };
 
@@ -560,7 +564,7 @@ export default function FireTab({ zones, setZones, settings, setSettings }: Fire
         type="file"
         ref={importFileInputRef}
         className="hidden"
-        accept=".xlsx,.xls,.csv,.txt"
+        accept=".xlsx,.xls,.csv,.txt,.json"
         onChange={e => {
           if (e.target.files && e.target.files[0]) {
             handleImportFile(e.target.files[0], 'append');
@@ -573,7 +577,7 @@ export default function FireTab({ zones, setZones, settings, setSettings }: Fire
       <div className="shrink-0 p-6 border-b border-[#1e2538] bg-[#0c101b] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20">
+            <div className="p-2.5 bg-gradient-to-br from-red-600/20 to-amber-600/20 text-red-400 rounded-xl border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
               <Flame size={24} className="animate-pulse" />
             </div>
             <div>
@@ -590,9 +594,9 @@ export default function FireTab({ zones, setZones, settings, setSettings }: Fire
         {!isWizardOpen && (
           <button
             onClick={handleAddNewSuppression}
-            className="bg-red-600 hover:bg-red-500 border border-red-400 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)] flex items-center gap-2 cursor-pointer shrink-0"
+            className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-500 hover:via-rose-500 hover:to-amber-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(239,68,68,0.35)] hover:shadow-[0_0_28px_rgba(239,68,68,0.55)] border border-red-400/80 active:scale-[0.98] flex items-center gap-2 cursor-pointer shrink-0"
           >
-            <Plus size={16} />
+            <Flame size={16} className="text-amber-300 animate-pulse" />
             <span>Design New Suppression System</span>
           </button>
         )}
@@ -620,9 +624,9 @@ export default function FireTab({ zones, setZones, settings, setSettings }: Fire
                   </p>
                   <button
                     onClick={handleAddNewSuppression}
-                    className="mt-6 bg-red-600 hover:bg-red-500 border border-red-400 text-white font-bold text-xs px-5 py-2.5 rounded-lg transition-all shadow-lg flex items-center gap-2 cursor-pointer"
+                    className="mt-6 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-500 hover:via-rose-500 hover:to-amber-500 text-white font-extrabold text-xs px-6 py-3 rounded-xl transition-all duration-300 shadow-[0_0_25px_rgba(239,68,68,0.4)] hover:shadow-[0_0_35px_rgba(239,68,68,0.6)] border border-red-400/80 active:scale-[0.98] flex items-center gap-2 cursor-pointer"
                   >
-                    <Plus size={16} />
+                    <Flame size={18} className="text-amber-300 animate-pulse" />
                     <span>Launch 12-Step Design Wizard</span>
                   </button>
                 </div>
@@ -786,20 +790,21 @@ export default function FireTab({ zones, setZones, settings, setSettings }: Fire
                                   <div className="flex items-center justify-center gap-1.5">
                                     <button
                                       onClick={() => handleEditZone(z)}
-                                      className="bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/20 px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all"
+                                      className="bg-gradient-to-r from-red-950/90 to-rose-950/90 hover:from-red-900 hover:to-rose-900 text-red-300 hover:text-white border border-red-500/40 hover:border-red-400 px-3 py-1 rounded-lg text-[11px] font-extrabold cursor-pointer transition-all duration-200 shadow-[0_0_10px_rgba(239,68,68,0.2)] hover:shadow-[0_0_16px_rgba(239,68,68,0.4)] flex items-center gap-1 active:scale-[0.98]"
                                     >
-                                      Edit Design
+                                      <Flame size={12} className="text-amber-400" />
+                                      <span>Edit Design</span>
                                     </button>
                                     <button
                                       onClick={() => handleDuplicateZone(z)}
-                                      className="p-1 text-blue-400 hover:text-blue-300 hover:bg-blue-950/40 rounded transition-all cursor-pointer"
+                                      className="p-1.5 text-blue-400 hover:text-blue-200 hover:bg-blue-950/80 rounded-lg border border-blue-500/30 hover:border-blue-400 transition-all duration-200 cursor-pointer shadow-[0_0_8px_rgba(59,130,246,0.15)] hover:shadow-[0_0_14px_rgba(59,130,246,0.35)] active:scale-[0.95]"
                                       title="Duplicate Zone"
                                     >
                                       <Copy size={14} />
                                     </button>
                                     <button
                                       onClick={() => handleRemoveZone(z.id)}
-                                      className="p-1 text-rose-500 hover:text-rose-400 hover:bg-[#2c1214] rounded border border-rose-500/10 transition-all cursor-pointer"
+                                      className="p-1.5 text-rose-400 hover:text-rose-200 hover:bg-rose-950/80 rounded-lg border border-rose-500/30 hover:border-rose-400 transition-all duration-200 cursor-pointer shadow-[0_0_8px_rgba(244,63,94,0.15)] hover:shadow-[0_0_14px_rgba(244,63,94,0.35)] active:scale-[0.95]"
                                       title="Delete Zone"
                                     >
                                       <Trash2 size={14} />
@@ -857,15 +862,15 @@ export default function FireTab({ zones, setZones, settings, setSettings }: Fire
                     <div className="flex gap-3">
                       <button
                         onClick={clearTable}
-                        className="bg-red-950/80 hover:bg-red-900 border border-red-800 text-red-300 font-bold text-xs px-4 py-2.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                        className="bg-rose-950/80 hover:bg-rose-900/90 text-rose-300 hover:text-white border border-rose-600/50 hover:border-rose-400 font-bold text-xs px-4 py-2.5 rounded-xl transition-all duration-200 shadow-[0_0_12px_rgba(244,63,94,0.18)] hover:shadow-[0_0_20px_rgba(244,63,94,0.35)] cursor-pointer flex items-center gap-1.5 active:scale-[0.98]"
                       >
                         <Trash2 size={14} /> Clear Table
                       </button>
                       <button
                         onClick={handleAddNewSuppression}
-                        className="bg-red-600 hover:bg-red-500 border border-red-400 text-white font-bold text-xs px-5 py-2.5 rounded-lg transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)] flex items-center gap-2 cursor-pointer"
+                        className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-500 hover:via-rose-500 hover:to-amber-500 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(239,68,68,0.35)] hover:shadow-[0_0_28px_rgba(239,68,68,0.55)] border border-red-400/80 active:scale-[0.98] flex items-center gap-2 cursor-pointer"
                       >
-                        <Plus size={16} /> Launch Design Wizard
+                        <Flame size={16} className="text-amber-300 animate-pulse" /> Launch Design Wizard
                       </button>
                     </div>
                   </div>
@@ -899,19 +904,19 @@ export default function FireTab({ zones, setZones, settings, setSettings }: Fire
                       <button
                         key={step.id}
                         onClick={() => setActiveStepIdx(idx)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all text-xs cursor-pointer ${
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 text-xs cursor-pointer ${
                           isActive
-                            ? 'bg-red-600/10 border border-red-500/30 text-red-400 font-bold'
+                            ? 'bg-gradient-to-r from-red-950/80 via-rose-950/80 to-[#111625] border border-red-500/60 text-red-300 font-extrabold shadow-[0_0_12px_rgba(239,68,68,0.25)]'
                             : isCompleted
-                            ? 'text-green-400 hover:bg-[#1a2033]/50'
+                            ? 'text-emerald-400 hover:bg-[#1a2033]/50'
                             : 'text-[#718096] hover:bg-[#1a2033]/30 hover:text-[#cbd5e0]'
                         }`}
                       >
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center border font-mono text-[10px] ${
                           isActive
-                            ? 'bg-red-600 border-red-400 text-white shadow-[0_0_8px_rgba(239,68,68,0.4)]'
+                            ? 'bg-gradient-to-br from-red-500 via-rose-600 to-amber-500 border-red-400 text-white font-black shadow-[0_0_10px_rgba(239,68,68,0.6)]'
                             : isCompleted
-                            ? 'bg-green-500/10 border-green-500 text-green-400'
+                            ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
                             : 'bg-transparent border-[#2d3748] text-[#718096]'
                         }`}>
                           {isCompleted ? '✓' : idx + 1}
@@ -1805,9 +1810,9 @@ export default function FireTab({ zones, setZones, settings, setSettings }: Fire
                         setActiveStepIdx(p => p + 1);
                       }
                     }}
-                    className="bg-red-600 hover:bg-red-500 border border-red-400 text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-all shadow-[0_0_10px_rgba(239,68,68,0.2)] flex items-center gap-1.5 cursor-pointer"
+                    className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-500 hover:via-rose-500 hover:to-amber-500 text-white text-xs font-extrabold px-6 py-2.5 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(239,68,68,0.35)] hover:shadow-[0_0_28px_rgba(239,68,68,0.55)] border border-red-400/80 active:scale-[0.98] flex items-center gap-2 cursor-pointer"
                   >
-                    <span>{activeStepIdx === STEPS.length - 1 ? 'Save & Complete' : 'Next Step'}</span>
+                    <span>{activeStepIdx === STEPS.length - 1 ? '🔥 Save & Complete' : 'Next Step'}</span>
                     <ChevronRight size={14} />
                   </button>
                 </div>

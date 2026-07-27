@@ -771,9 +771,14 @@ export default function HvacTab({ units, setUnits, boards, setBoards, settings, 
       uniqueZones.forEach(zoneName => {
         finalUnits = balanceHvacCoolingLoads(finalUnits, zoneName!, undefined, false, settings);
       });
-      setUnits(finalUnits);
+      setTimeout(() => {
+        setUnits(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(finalUnits)) return prev;
+          return finalUnits;
+        });
+      }, 0);
     }
-  }, [boards, units, setUnits]);
+  }, [boards]);
 
   // AC Equipment Summary Memoized counts and types
   const acSummary = useMemo(() => {
@@ -806,6 +811,8 @@ export default function HvacTab({ units, setUnits, boards, setBoards, settings, 
   // File Import Logic
   const handleImportFile = async (file: File, mode: 'append' | 'replace') => {
     try {
+      window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: true }));
+      await new Promise(r => setTimeout(r, 100));
       const res = await parseMEPFile(file, boards, settings);
       if (res.hvacUnits && res.hvacUnits.length > 0) {
         setUnits(prev => {
@@ -818,9 +825,11 @@ export default function HvacTab({ units, setUnits, boards, setBoards, settings, 
         });
       }
       window.dispatchEvent(new CustomEvent('trigger-mep-update-workspace', { detail: res }));
-      window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: res.summaryMessage } }));
+      window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: `📥 ${res.summaryMessage}` } }));
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: false, text: 'Import failed: ' + (err.message || 'invalid file') } }));
+    } finally {
+      window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: false }));
     }
   };
 
@@ -1076,11 +1085,21 @@ export default function HvacTab({ units, setUnits, boards, setBoards, settings, 
     }
 
     if (boardsChanged) {
-      updateBoardsAction(newBoards);
+      setTimeout(() => {
+        updateBoardsAction(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(newBoards)) return prev;
+          return newBoards;
+        });
+      }, 0);
     }
 
     if (unitsChanged && setUnits) {
-      setUnits(newUnitsCopy);
+      setTimeout(() => {
+        setUnits(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(newUnitsCopy)) return prev;
+          return newUnitsCopy;
+        });
+      }, 0);
     }
   };
 
@@ -1830,7 +1849,7 @@ export default function HvacTab({ units, setUnits, boards, setBoards, settings, 
         type="file"
         ref={importFileInputRef}
         className="hidden"
-        accept=".xlsx,.xls,.csv,.txt"
+        accept=".xlsx,.xls,.csv,.txt,.json"
         onChange={e => {
           if (e.target.files && e.target.files[0]) {
             handleImportFile(e.target.files[0], 'append');

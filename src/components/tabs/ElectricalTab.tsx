@@ -28,59 +28,115 @@ export const DEFAULT_DROPDOWNS: Record<string, string[]> = {
   'Mount Types': ['Recessed', 'Surface'],
   'Lighting Controls': ['Smart', 'Non Smart'],
   'Socket Types': ['Double', 'Single', 'Grid Socket'],
+  'Socket Ratings': ['13A', '15A', '20-45A'],
   'Socket Sizing / Rating': [
-    '13A Socket (General Purpose)',
-    'Refrigerator / Fridge',
-    'Deep Freezer',
-    'Microwave Oven',
-    'Electric Oven / Cooker',
-    'Induction Cooktop / Hob',
-    'Rice Cooker / Pressure Cooker',
+    'Spare',
+    'Airfryer',
+    'Alarm',
+    'Beard Trimmer',
+    'Bidet',
+    'Blender',
+    'Boosterpump',
+    'Boreholepump',
+    'Breadmaker',
+    'Circularsaw',
+    'Cleaner',
+    'Coffeemaker',
+    'Compressor',
+    'Computer',
+    'Console',
+    'Cooktop',
+    'CrossTrainer',
+    'Dehumidifier',
+    'Dehydrator',
     'Dishwasher',
-    'Electric Kettle',
-    'Blender / Food Processor',
-    'Toaster / Sandwich Maker',
-    'Air Fryer',
-    'Coffee Maker / Espresso Machine',
-    'Water Dispenser (Hot/Cold)',
-    'Water Purifier / RO System',
-    'Kitchen Exhaust Hood',
-    'Garbage Disposal',
-    'Wine Cooler / Beverage Fridge',
-    'Washing Machine',
-    'Clothes Dryer (Tumble)',
-    'Electric Steam Iron',
-    'Vacuum Cleaner / Robot Vacuum',
-    'Steam Cleaner / Mop',
-    'Television (LED/OLED TV)',
-    'Home Theater / Soundbar',
-    'Gaming Console (PS5/Xbox/PC)',
-    'Desktop Workstation / PC',
-    'Computer Monitor / Printer',
-    'Wi-Fi Router & Network Equipment',
-    'Set-Top Box / Decoder',
-    'Air Purifier / Dehumidifier',
-    'Hair Dryer / Styler',
-    'Ceiling / Standing Fan',
-    'Room Space Heater',
-    'Electric Blanket',
-    'Massage Chair',
-    'Water Heater / Geyser (13A/15A)',
-    'Water Submersible / Surface Pump',
-    'Treadmill / Gym Equipment',
-    'EV Home Charger (13A/16A)',
-    '13A Socket',
-    '13A floor socket',
-    '13A In-Object',
-    '15A-20A Socket',
-    '32A Socket (cooker equipment)',
-    'Socket with USB-A/USB-C',
-    'Smart Wi-Fi Socket',
-    'Child-Proof Socket',
-    'Shaver Socket',
-    '16A 3ph Industrial',
-    '32A 3ph Industrial',
-    '63A 3ph Industrial'
+    'Dispenser',
+    'Disposal',
+    'Drill',
+    'Dryer',
+    'Eggcooker',
+    'Elliptical',
+    'ExerciseBike',
+    'FacialSteamer',
+    'Fan',
+    'Fireplace',
+    'FootSpa',
+    'Fountainpump',
+    'Freezer',
+    'Garagedoor',
+    'GarmentSteamer',
+    'Gardenpump',
+    'Gatemotor',
+    'Grinder',
+    'GrinderTool',
+    'Grill',
+    'HairClipper',
+    'HairCurler',
+    'Hairdryer',
+    'HairStraightener',
+    'Hammer',
+    'Hedgetrimmer',
+    'HomeGym',
+    'Hood',
+    'HotAirBrush',
+    'Hotplate',
+    'Icemaker',
+    'Induction',
+    'Inflator',
+    'Iron',
+    'IronPress',
+    'Jigsaw',
+    'Juicer',
+    'Kettle',
+    'Laptop',
+    'Lawnmower',
+    'Leafblower',
+    'MassageChair',
+    'MassageGun',
+    'Massager',
+    'Microwave',
+    'Mixer',
+    'Monitor',
+    'Mop',
+    'Multicooker',
+    'Oven',
+    'Piano',
+    'Poolpump',
+    'Pressurecooker',
+    'Pressurewasher',
+    'Printer',
+    'Processor',
+    'Projector',
+    'Purifier',
+    'Refrigerator',
+    'Ricecooker',
+    'Robot',
+    'RowingMachine',
+    'Sandwichmaker',
+    'Sealer',
+    'Slowcooker',
+    'SkiMachine',
+    'Sockets',
+    'Soundbar',
+    'Speaker',
+    'SpinBike',
+    'StairClimber',
+    'Steamer',
+    'Stringtrimmer',
+    'Submersiblepump',
+    'Surfacepump',
+    'Television',
+    'Toaster',
+    'TowelWarmer',
+    'Treadmill',
+    'UPS',
+    'Vacuum',
+    'VibrationPlate',
+    'Wafflemaker',
+    'Warmer',
+    'Washer',
+    'WasherDryer',
+    'Welder'
   ],
   'Socket Fix Styles': ['Indoor', 'Outdoor'],
   'Socket Mounts': ['Wall', 'Floor', 'In-Object'],
@@ -127,6 +183,7 @@ export const FIXTURE_STYLES = DEFAULT_DROPDOWNS['Fixture Styles'];
 export const MOUNT_TYPES = DEFAULT_DROPDOWNS['Mount Types'];
 export const LIGHTING_CONTROLS = DEFAULT_DROPDOWNS['Lighting Controls'];
 export const SOCKET_TYPES = DEFAULT_DROPDOWNS['Socket Types'];
+export const SOCKET_RATINGS = DEFAULT_DROPDOWNS['Socket Ratings'];
 export const SOCKET_VARIANCES = DEFAULT_DROPDOWNS['Socket Sizing / Rating'];
 export const SOCKET_FIX_STYLES = DEFAULT_DROPDOWNS['Socket Fix Styles'];
 export const SOCKET_MOUNTS = DEFAULT_DROPDOWNS['Socket Mounts'];
@@ -145,80 +202,164 @@ export const CB_SIZES = [6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 2
 
 // Socket Appliance / Variance Actual Wattage Ratings Mapping
 export const SOCKET_APPLIANCE_WATTS_MAP: Record<string, number> = {
-  // Kitchen Appliances
-  'Refrigerator / Fridge': 200,
-  'Deep Freezer': 300,
-  'Microwave Oven': 1200,
-  'Electric Oven / Cooker': 3000,
-  'Induction Cooktop / Hob': 2500,
-  'Rice Cooker / Pressure Cooker': 800,
-  'Dishwasher': 1500,
-  'Electric Kettle': 2000,
-  'Blender / Food Processor': 500,
-  'Toaster / Sandwich Maker': 850,
-  'Air Fryer': 1500,
-  'Coffee Maker / Espresso Machine': 1000,
-  'Water Dispenser (Hot/Cold)': 600,
-  'Water Purifier / RO System': 50,
-  'Kitchen Exhaust Hood': 250,
-  'Garbage Disposal': 500,
-  'Wine Cooler / Beverage Fridge': 150,
+  // Specified 107 Appliances
+  'Spare': 0,
+  'Airfryer': 1800,
+  'Alarm': 30,
+  'Beard Trimmer': 50,
+  'Bidet': 1200,
+  'Blender': 500,
+  'Boosterpump': 1000,
+  'Boreholepump': 1500,
+  'Breadmaker': 800,
+  'Circularsaw': 1800,
+  'Cleaner': 1500,
+  'Coffeemaker': 1200,
+  'Compressor': 2000,
+  'Computer': 300,
+  'Console': 180,
+  'Cooktop': 2000,
+  'CrossTrainer': 500,
+  'Dehumidifier': 500,
+  'Dehydrator': 600,
+  'Dishwasher': 1800,
+  'Dispenser': 120,
+  'Disposal': 700,
+  'Drill': 800,
+  'Dryer': 3000,
+  'Eggcooker': 350,
+  'Elliptical': 500,
+  'ExerciseBike': 300,
+  'FacialSteamer': 300,
+  'Fan': 75,
+  'Fireplace': 1800,
+  'FootSpa': 500,
+  'Fountainpump': 300,
+  'Freezer': 250,
+  'Garagedoor': 600,
+  'GarmentSteamer': 1800,
+  'Gardenpump': 750,
+  'Gatemotor': 750,
+  'Grinder': 500,
+  'GrinderTool': 1000,
+  'Grill': 1800,
+  'HairClipper': 100,
+  'HairCurler': 60,
+  'Hairdryer': 1800,
+  'HairStraightener': 60,
+  'Hammer': 1000,
+  'Hedgetrimmer': 600,
+  'HomeGym': 1000,
+  'Hood': 200,
+  'HotAirBrush': 1200,
+  'Hotplate': 1500,
+  'Icemaker': 200,
+  'Induction': 2000,
+  'Inflator': 150,
+  'Iron': 1500,
+  'IronPress': 2500,
+  'Jigsaw': 700,
+  'Juicer': 600,
+  'Kettle': 2000,
+  'Laptop': 90,
+  'Lawnmower': 1500,
+  'Leafblower': 1200,
+  'MassageChair': 250,
+  'MassageGun': 60,
+  'Massager': 100,
+  'Microwave': 1200,
+  'Mixer': 300,
+  'Monitor': 50,
+  'Mop': 400,
+  'Multicooker': 1200,
+  'Oven': 3000,
+  'Piano': 50,
+  'Poolpump': 1500,
+  'Pressurecooker': 1000,
+  'Pressurewasher': 2000,
+  'Printer': 500,
+  'Processor': 800,
+  'Projector': 350,
+  'Purifier': 60,
+  'Refrigerator': 200,
+  'Ricecooker': 1000,
+  'Robot': 60,
+  'RowingMachine': 300,
+  'Sandwichmaker': 800,
+  'Sealer': 150,
+  'Slowcooker': 250,
+  'SkiMachine': 700,
+  'Sockets': 200,
+  'Soundbar': 80,
+  'Speaker': 100,
+  'SpinBike': 150,
+  'StairClimber': 700,
+  'Steamer': 1800,
+  'Stringtrimmer': 700,
+  'Submersiblepump': 1500,
+  'Surfacepump': 750,
+  'Television': 120,
+  'Toaster': 1200,
+  'TowelWarmer': 150,
+  'Treadmill': 2500,
+  'UPS': 300,
+  'Vacuum': 1500,
+  'VibrationPlate': 500,
+  'Wafflemaker': 1200,
+  'Warmer': 250,
+  'Washer': 1000,
+  'WasherDryer': 2500,
+  'Welder': 5000,
 
-  // Laundry & Cleaning
-  'Washing Machine': 1000,
-  'Clothes Dryer (Tumble)': 2500,
-  'Electric Steam Iron': 1800,
-  'Vacuum Cleaner': 1400,
-  'Vacuum Cleaner / Robot Vacuum': 1400,
-  'Steam Cleaner / Mop': 1500,
-
-  // Living Room & Entertainment
-  'Television (LED/OLED TV)': 150,
-  'Home Theater / Soundbar': 250,
-  'Gaming Console (PS5/Xbox/PC)': 350,
-  'Desktop Workstation / PC': 400,
-  'Computer Monitor / Printer': 150,
-  'Wi-Fi Router & Network Equipment': 30,
-  'Set-Top Box / Decoder': 25,
-  'Air Purifier / Dehumidifier': 100,
-
-  // Bedroom & Personal Care
-  'Hair Dryer / Styler': 1600,
-  'Ceiling / Standing Fan': 75,
-  'Room Space Heater': 2000,
-  'Electric Blanket': 100,
-  'Massage Chair': 200,
-
-  // Heavy Duty & Utility
-  'Water Heater / Geyser (13A/15A)': 3000,
-  'Water Submersible / Surface Pump': 1100,
-  'Treadmill / Gym Equipment': 1500,
-  'EV Home Charger (13A/16A)': 3000,
-
-  // Standard Sockets / Ratings
-  '13A Socket (General Purpose)': 1000,
-  '13A Socket': 1000,
-  '13A floor socket': 1000,
-  '13A In-Object': 1000,
+  // Fallback Aliases & Legacy Mappings
+  '13A Socket (General Purpose)': 200,
+  '13A Socket': 200,
+  '13A floor socket': 200,
+  '13A In-Object': 200,
   '15A-20A Socket': 2000,
   '32A Socket (cooker equipment)': 3500,
-  'Socket with USB-A/USB-C': 1000,
-  'Smart Wi-Fi Socket': 1000,
-  'Child-Proof Socket': 1000,
+  'Socket with USB-A/USB-C': 200,
+  'Smart Wi-Fi Socket': 200,
+  'Child-Proof Socket': 200,
   'Shaver Socket': 50,
   '16A 3ph Industrial': 3500,
   '32A 3ph Industrial': 7000,
   '63A 3ph Industrial': 15000,
+  '13A': 200,
+  '15A': 2000,
+  '20-60A': 3000,
+  'Air Fryer': 1800,
+  'Coffee Maker': 1200,
+  'Washing Machine': 1000,
+  'Refrigerator / Fridge': 200,
 };
 
 export function getSocketApplianceWatts(varianceStr?: string): number | null {
   if (!varianceStr) return null;
+  // 1. Direct exact key lookup
   if (SOCKET_APPLIANCE_WATTS_MAP[varianceStr] !== undefined) {
     return SOCKET_APPLIANCE_WATTS_MAP[varianceStr];
   }
   const lower = varianceStr.trim().toLowerCase();
+  // 2. Case-insensitive exact lookup
   for (const [key, watts] of Object.entries(SOCKET_APPLIANCE_WATTS_MAP)) {
-    if (key.toLowerCase() === lower || key.toLowerCase().includes(lower) || lower.includes(key.toLowerCase())) {
+    if (key.toLowerCase() === lower) {
+      return watts;
+    }
+  }
+  // 3. Normalized alphanumeric lookup
+  const normVal = lower.replace(/[^a-z0-9]/g, '');
+  if (normVal) {
+    for (const [key, watts] of Object.entries(SOCKET_APPLIANCE_WATTS_MAP)) {
+      if (key.toLowerCase().replace(/[^a-z0-9]/g, '') === normVal) {
+        return watts;
+      }
+    }
+  }
+  // 4. Substring fallback lookup
+  for (const [key, watts] of Object.entries(SOCKET_APPLIANCE_WATTS_MAP)) {
+    const keyLower = key.toLowerCase();
+    if (keyLower.length > 3 && (lower.includes(keyLower) || keyLower.includes(lower))) {
       return watts;
     }
   }
@@ -412,9 +553,9 @@ const LOCATION_SUGGESTIONS = [
 
 // Phase colors for visual balancer
 const PHASE_COLORS: Record<string, string> = {
-  R: '#ef4444',
-  Y: '#facc15',
-  B: '#3b82f6',
+  R: '#ff0017',
+  Y: '#ffc30a',
+  B: '#248bff',
   L: '#a855f7',
 };
 
@@ -560,7 +701,16 @@ export default function ElectricalTab({
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        return { ...DEFAULT_DROPDOWNS, ...parsed };
+        const hasDoubleSockets = parsed['Socket Types'] && parsed['Socket Types'].includes('Double');
+        const hasNewRatings = parsed['Socket Ratings'] && parsed['Socket Ratings'].includes('13A');
+        const hasNewVariances = parsed['Socket Sizing / Rating'] && parsed['Socket Sizing / Rating'].includes('Airfryer');
+        return {
+          ...DEFAULT_DROPDOWNS,
+          ...parsed,
+          'Socket Types': hasDoubleSockets ? parsed['Socket Types'] : DEFAULT_DROPDOWNS['Socket Types'],
+          'Socket Ratings': hasNewRatings ? parsed['Socket Ratings'] : DEFAULT_DROPDOWNS['Socket Ratings'],
+          'Socket Sizing / Rating': hasNewVariances ? parsed['Socket Sizing / Rating'] : DEFAULT_DROPDOWNS['Socket Sizing / Rating'],
+        };
       } catch (e) {
         // fallback
       }
@@ -639,6 +789,7 @@ export default function ElectricalTab({
   const dynamic_FIXTURE_STYLES = dropdowns['Fixture Styles'] || FIXTURE_STYLES;
   const dynamic_MOUNT_TYPES = dropdowns['Mount Types'] || MOUNT_TYPES;
   const dynamic_SOCKET_TYPES = dropdowns['Socket Types'] || SOCKET_TYPES;
+  const dynamic_SOCKET_RATINGS = dropdowns['Socket Ratings'] || SOCKET_RATINGS;
   const dynamic_SOCKET_VARIANCES = dropdowns['Socket Sizing / Rating'] || SOCKET_VARIANCES;
   const dynamic_AC_TYPES = dropdowns['AC Types'] || AC_TYPES;
   const dynamic_DEDICATED_TYPES = dropdowns['Dedicated Types'] || DEDICATED_TYPES;
@@ -1085,7 +1236,12 @@ export default function ElectricalTab({
     }
 
     if (unitsChanged) {
-      updateHvacAction(newUnits);
+      setTimeout(() => {
+        updateHvacAction(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(newUnits)) return prev;
+          return newUnits;
+        });
+      }, 0);
     }
   };
 
@@ -1109,8 +1265,9 @@ export default function ElectricalTab({
     fixtureStyle: 'Spot',
     fixtureVariance: 'None',
     socketType: 'Double',
+    socketRating: '13A',
     socketFixtureStyle: 'Indoor',
-    socketVariance: '13A Socket',
+    socketVariance: 'Sockets',
     acType: 'Split',
     acFixtureStyle: 'Inverter',
     dedicatedType: 'Single Phase',
@@ -1225,8 +1382,9 @@ export default function ElectricalTab({
       fixtureStyle: 'Spot',
       fixtureVariance: 'None',
       socketType: 'Double',
+      socketRating: '13A',
       socketFixtureStyle: 'Indoor',
-      socketVariance: '13A Socket',
+      socketVariance: 'Sockets',
       acType: 'Split',
       acFixtureStyle: 'Inverter',
       dedicatedType: 'Single Phase',
@@ -1271,8 +1429,9 @@ export default function ElectricalTab({
       fixtureStyle: c.fixtureStyle || 'Spot',
       fixtureVariance: c.fixtureVariance || 'None',
       socketType: c.socketType || 'Double',
+      socketRating: c.socketRating || '13A',
       socketFixtureStyle: c.socketFixtureStyle || 'Indoor',
-      socketVariance: c.socketVariance || '13A Socket',
+      socketVariance: c.socketVariance || 'Sockets',
       acType: c.acType || 'Split',
       acFixtureStyle: c.acFixtureStyle || 'Inverter',
       dedicatedType: c.dedicatedType || 'Single Phase',
@@ -1358,6 +1517,7 @@ export default function ElectricalTab({
                 controlType: isLighting ? newCircuitForm.controlType : undefined,
 
                 socketType: isSockets ? newCircuitForm.socketType : undefined,
+                socketRating: isSockets ? (newCircuitForm.socketRating || '13A') : undefined,
                 socketFixtureStyle: isSockets ? newCircuitForm.socketFixtureStyle : undefined,
                 socketVariance: isSockets ? newCircuitForm.socketVariance : undefined,
                 socketMountType: isSockets ? newCircuitForm.socketMountType : undefined,
@@ -1404,6 +1564,7 @@ export default function ElectricalTab({
         controlType: isLighting ? newCircuitForm.controlType : undefined,
 
         socketType: isSockets ? newCircuitForm.socketType : undefined,
+        socketRating: isSockets ? (newCircuitForm.socketRating || '13A') : undefined,
         socketFixtureStyle: isSockets ? newCircuitForm.socketFixtureStyle : undefined,
         socketVariance: isSockets ? newCircuitForm.socketVariance : undefined,
         socketMountType: isSockets ? newCircuitForm.socketMountType : undefined,
@@ -1926,7 +2087,7 @@ export default function ElectricalTab({
     return acc;
   }, {} as Record<string, number>);
 
-  const activeSockets = SOCKET_VARIANCES.filter(s => (socketTotals[s] || 0) > 0);
+  const activeSockets = dynamic_SOCKET_VARIANCES.filter(s => (socketTotals[s] || 0) > 0);
   const grandTotalSockets = activeSockets.reduce((acc, s) => acc + socketTotals[s], 0);
 
   // Color mapping aggregates
@@ -2412,35 +2573,6 @@ export default function ElectricalTab({
 
                         {/* Sizing Router configuration */}
                         <DropdownCategoryConfigPanel selectedKey={selectedDropdownKey} dropdowns={dropdowns} />
-
-                        {/* Add New Option Field */}
-                        <div>
-                          <label className="block text-[10px] text-gray-400 mb-1.5 uppercase font-semibold tracking-wider">
-                            Add New Option
-                          </label>
-                          <div className="flex gap-1.5">
-                            <input
-                              type="text"
-                              value={newDropdownItem}
-                              onChange={(e) => setNewDropdownItem(e.target.value)}
-                              placeholder="e.g. 2.5 mm²"
-                              className="flex-1 bg-[#0f1117] border border-[#2d3748] rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-600 outline-none"
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  handleAddDropdownItem();
-                                }
-                              }}
-                            />
-                            <button
-                              type="button"
-                              onClick={handleAddDropdownItem}
-                              className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3.5 py-1.5 rounded transition-all cursor-pointer"
-                            >
-                              Add
-                            </button>
-                          </div>
-                        </div>
 
                         {/* Populate from table data */}
                         <div className="bg-[#13192a]/50 p-3 rounded border border-[#2d3748]/60 space-y-2">
@@ -4077,7 +4209,7 @@ export default function ElectricalTab({
                               <thead>
                                 <tr className="bg-[#0f172a] text-gray-400 border-b border-[#1e293b] text-[10px] uppercase font-bold tracking-wider">
                                   <th className="p-2.5 text-center w-24">Circuit ID</th>
-                                  <th className="p-2.5 text-center w-36">Phase</th>
+                                  <th className="p-2.5 text-center w-16">Phase</th>
                                   <th className="p-2.5">Load Type</th>
                                   <th className="p-2.5">Appliance / Purpose</th>
                                   <th className="p-2.5">Location / Room</th>
@@ -4121,10 +4253,23 @@ export default function ElectricalTab({
                                         </span>
                                       </td>
                                       <td className="p-2.5 text-center">
-                                        <span className="px-2.5 py-1 rounded border border-[#2d3748] bg-[#0c121e] text-[10px] font-semibold text-gray-200 inline-flex items-center justify-center gap-1 w-full shadow-sm">
-                                          <span>{phaseName} — </span>
-                                          <span className={`font-extrabold ${phaseColor}`}>{phaseLetter}</span>
-                                        </span>
+                                        {item.isThreePhase ? (
+                                          <span className="px-2 py-0.5 rounded font-extrabold text-xs text-purple-300 bg-purple-950/80 border border-purple-500/50 shadow-sm inline-block">
+                                            R+Y+B
+                                          </span>
+                                        ) : (
+                                          <span
+                                            className={`px-2.5 py-0.5 rounded font-extrabold text-xs shadow-sm inline-block ${
+                                              item.phase === 'Y'
+                                                ? 'text-yellow-300 bg-yellow-950/80 border border-yellow-500/50'
+                                                : item.phase === 'B'
+                                                ? 'text-blue-300 bg-blue-950/80 border border-blue-500/50'
+                                                : 'text-red-400 bg-red-950/80 border border-red-500/50'
+                                            }`}
+                                          >
+                                            {item.phase || 'R'}
+                                          </span>
+                                        )}
                                       </td>
                                       <td className="p-2.5 font-bold text-white">
                                         {loadTypeStr}
@@ -4298,7 +4443,7 @@ export default function ElectricalTab({
                 <th className="sticky top-0 z-30 bg-[#13192a] p-2 w-24 min-w-[96px] max-w-[96px] text-right text-[#718096]">Watts</th>
                 <th className="sticky top-0 z-30 bg-[#13192a] p-2 w-20 min-w-[80px] max-w-[80px] text-center text-[#718096]">Quantity</th>
                 <th className="sticky top-0 z-30 bg-[#13192a] p-2 w-24 min-w-[96px] max-w-[96px] text-right text-[#718096]">Total Watt</th>
-                {isThreePhase && <th className="sticky top-0 z-30 bg-[#13192a] p-2 w-20 min-w-[80px] max-w-[80px] text-center text-[#718096]">Phase</th>}
+                {isThreePhase && <th className="sticky top-0 z-30 bg-[#13192a] p-2 w-16 min-w-[60px] max-w-[70px] text-center text-[#718096]">Phase</th>}
                 <th className="sticky top-0 z-30 bg-[#13192a] p-2 w-24 min-w-[96px] max-w-[96px] text-center text-[#718096]">CB Sizing</th>
                 <th className="sticky top-0 z-30 bg-[#13192a] p-2 w-24 min-w-[96px] max-w-[96px] text-center text-[#718096]">Wire mm²</th>
                 <th className="sticky top-0 z-30 bg-[#13192a] p-2 w-28 min-w-[112px] max-w-[112px] text-center text-[#718096]">Cable Length</th>
@@ -4796,6 +4941,7 @@ export default function ElectricalTab({
                                 value={c.socketType || 'Double'}
                                 onChange={e => updateCircuitField(c.id, 'socketType', e.target.value)}
                                 className="w-full max-w-full outline-none bg-transparent border border-[#2d3748] rounded px-1.5 py-0.5 text-xs text-sky-300 font-semibold"
+                                title="Socket Type (e.g. Double, Single)"
                               >
                                 {dynamic_SOCKET_TYPES.map(t => (
                                   <option key={t} value={t}>
@@ -4804,25 +4950,14 @@ export default function ElectricalTab({
                                 ))}
                               </select>
                               <select
-                                value={c.socketVariance || '13A Socket (General Purpose)'}
-                                onChange={e => {
-                                  const val = e.target.value;
-                                  const autoW = getSocketApplianceWatts(val);
-                                  if (autoW !== null) {
-                                    updateCircuitFields(c.id, {
-                                      socketVariance: val,
-                                      watts: autoW
-                                    });
-                                  } else {
-                                    updateCircuitField(c.id, 'socketVariance', val);
-                                  }
-                                }}
+                                value={c.socketRating || '13A'}
+                                onChange={e => updateCircuitField(c.id, 'socketRating', e.target.value)}
                                 className="w-full max-w-full outline-none bg-transparent border border-[#2d3748] rounded px-1.5 py-0.5 text-[10px] text-cyan-300 font-medium cursor-pointer"
-                                title="Socket Purpose / Appliance Sub-Variance (Auto-fills watts)"
+                                title="Sub Variance / Socket Rating (13A, 15A, 20-45A)"
                               >
-                                {dynamic_SOCKET_VARIANCES.map(v => (
-                                  <option key={v} value={v}>
-                                    {v}
+                                {dynamic_SOCKET_RATINGS.map(r => (
+                                  <option key={r} value={r}>
+                                    {r}
                                   </option>
                                 ))}
                               </select>
@@ -5118,14 +5253,14 @@ export default function ElectricalTab({
 
                         {/* 17. Phase (for 3-Phase board only) */}
                         {isThreePhase && (
-                          <td className="p-2 text-center w-28 min-w-[110px]">
+                          <td className="p-1.5 text-center w-16 min-w-[60px] max-w-[70px]">
                             {isThreePhaseDedicated ? (
-                              <span className="inline-flex items-center justify-center gap-0.5 text-[10px] font-extrabold px-1.5 py-1 rounded bg-[#1e1a2e] border border-purple-500/50 shadow-sm w-full">
-                                <span className="text-[#ef4444]">R</span>
+                              <span className="inline-flex items-center justify-center gap-0.5 text-[10px] font-extrabold px-1 py-0.5 rounded bg-[#1e1a2e] border border-purple-500/50 shadow-sm w-full">
+                                <span style={{ color: PHASE_COLORS.R }}>R</span>
                                 <span className="text-gray-400">+</span>
-                                <span className="text-[#facc15]">Y</span>
+                                <span style={{ color: PHASE_COLORS.Y }}>Y</span>
                                 <span className="text-gray-400">+</span>
-                                <span className="text-[#3b82f6]">B</span>
+                                <span style={{ color: PHASE_COLORS.B }}>B</span>
                               </span>
                             ) : (() => {
                               const currentSelectedPhase = Pi.includes(c.phase) ? c.phase : (() => {
@@ -5141,20 +5276,18 @@ export default function ElectricalTab({
                                 return Pi[idx !== -1 ? idx % 3 : 0];
                               })();
 
-                              const pColor = PHASE_COLORS[currentSelectedPhase] || '#38bdf8';
-
-                              const PHASE_FULL_NAMES: Record<string, string> = {
-                                R: 'Red Phase (L1) — R',
-                                Y: 'Yellow Phase (L2) — Y',
-                                B: 'Blue Phase (L3) — B'
-                              };
+                              const pColor = PHASE_COLORS[currentSelectedPhase] || '#ff0017';
 
                               return (
                                 <select
                                   value={currentSelectedPhase}
                                   onChange={e => updateCircuitField(c.id, 'phase', e.target.value)}
-                                  className="w-full min-w-[130px] bg-[#0f1117] font-extrabold border border-[#2d3748] rounded px-1.5 py-1 text-xs outline-none cursor-pointer text-center focus:border-blue-500"
-                                  style={{ color: pColor }}
+                                  className="w-full bg-[#0f1117] font-black border rounded px-1 py-0.5 text-xs outline-none cursor-pointer text-center focus:border-blue-500 shadow-sm"
+                                  style={{
+                                    color: pColor,
+                                    backgroundColor: `${pColor}20`,
+                                    borderColor: `${pColor}60`
+                                  }}
                                 >
                                   {Pi.map(phaseOption => {
                                     const optColor = PHASE_COLORS[phaseOption] || '#ffffff';
@@ -5168,7 +5301,7 @@ export default function ElectricalTab({
                                           fontWeight: 'bold'
                                         }}
                                       >
-                                        {PHASE_FULL_NAMES[phaseOption] || phaseOption}
+                                        {phaseOption}
                                       </option>
                                     );
                                   })}
@@ -5711,13 +5844,13 @@ export default function ElectricalTab({
 
                   {/* Sockets specific subfields */}
                   {newCircuitForm.loadType === 'Sockets' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-left">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-left">
                       <div>
                         <label className="block text-[10px] text-gray-400 mb-1 uppercase font-semibold">Socket Type</label>
                         <select
                           value={newCircuitForm.socketType}
                           onChange={e => setNewCircuitForm(p => ({ ...p, socketType: e.target.value }))}
-                          className="w-full bg-[#0f1117] border border-[#2d3748] rounded-md text-white p-2 text-xs outline-none focus:border-blue-500"
+                          className="w-full bg-[#0f1117] border border-[#2d3748] rounded-md text-white p-2 text-xs outline-none focus:border-blue-500 font-semibold"
                         >
                           {dynamic_SOCKET_TYPES.map(t => (
                             <option key={t} value={t}>{t}</option>
@@ -5726,8 +5859,21 @@ export default function ElectricalTab({
                       </div>
 
                       <div>
+                        <label className="block text-[10px] text-gray-400 mb-1 uppercase font-semibold">Sub Variance / Rating</label>
+                        <select
+                          value={newCircuitForm.socketRating || '13A'}
+                          onChange={e => setNewCircuitForm(p => ({ ...p, socketRating: e.target.value }))}
+                          className="w-full bg-[#0f1117] border border-[#2d3748] rounded-md text-cyan-300 p-2 text-xs outline-none focus:border-blue-500 font-semibold"
+                        >
+                          {dynamic_SOCKET_RATINGS.map(r => (
+                            <option key={r} value={r}>{r}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
                         <label className="block text-[10px] text-gray-400 mb-1 uppercase font-semibold">
-                          Socket Purpose / Appliance Variance <span className="text-cyan-400 font-normal lowercase">(auto-fills watts, editable)</span>
+                          Appliance Purpose <span className="text-cyan-400 font-normal lowercase">(auto-fills watts)</span>
                         </label>
                         <select
                           value={newCircuitForm.socketVariance}
@@ -5949,21 +6095,18 @@ export default function ElectricalTab({
                       <select
                         value={newCircuitForm.phase}
                         onChange={e => setNewCircuitForm(p => ({ ...p, phase: e.target.value }))}
-                        className="w-full bg-[#0f1117] border border-[#2d3748] rounded-md text-white p-2 text-xs outline-none focus:border-blue-500 font-bold cursor-pointer"
-                        style={{ color: PHASE_COLORS[newCircuitForm.phase] }}
+                        className="w-full bg-[#0f1117] border border-[#2d3748] rounded-md p-2 text-xs outline-none focus:border-blue-500 font-extrabold cursor-pointer text-center"
+                        style={{
+                          color: PHASE_COLORS[newCircuitForm.phase] || '#ff0017',
+                          backgroundColor: `${PHASE_COLORS[newCircuitForm.phase] || '#ff0017'}20`,
+                          borderColor: `${PHASE_COLORS[newCircuitForm.phase] || '#ff0017'}60`
+                        }}
                       >
-                        {Pi.map(phaseOption => {
-                          const fullLabels: Record<string, string> = {
-                            R: 'Red Phase — L1 (230V)',
-                            Y: 'Yellow Phase — L2 (230V)',
-                            B: 'Blue Phase — L3 (230V)'
-                          };
-                          return (
-                            <option key={phaseOption} value={phaseOption} style={{ color: PHASE_COLORS[phaseOption], backgroundColor: '#0f172a' }}>
-                              {fullLabels[phaseOption] || phaseOption}
-                            </option>
-                          );
-                        })}
+                        {Pi.map(phaseOption => (
+                          <option key={phaseOption} value={phaseOption} style={{ color: PHASE_COLORS[phaseOption], backgroundColor: '#0f172a', fontWeight: 'bold' }}>
+                            {phaseOption}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   )}

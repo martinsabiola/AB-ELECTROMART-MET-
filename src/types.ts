@@ -65,6 +65,7 @@ export interface Circuit {
   mountType?: string;
   controlType?: string;
   socketType?: string;
+  socketRating?: string;
   socketFixtureStyle?: string;
   socketMountType?: string;
   socketControl?: string;

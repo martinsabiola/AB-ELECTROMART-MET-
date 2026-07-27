@@ -56,14 +56,18 @@ export default function CctvTab({
   // File Import Logic
   const handleImportFile = async (file: File, mode: 'append' | 'replace') => {
     try {
+      window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: true }));
+      await new Promise(r => setTimeout(r, 100));
       const res = await parseMEPFile(file, [], settings);
       if (res.cameras && res.cameras.length > 0) {
         setCameras(prev => mode === 'replace' ? res.cameras! : [...prev, ...res.cameras!]);
       }
       window.dispatchEvent(new CustomEvent('trigger-mep-update-workspace', { detail: res }));
-      window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: res.summaryMessage } }));
+      window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: `📥 ${res.summaryMessage}` } }));
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: false, text: 'Import failed: ' + (err.message || 'invalid file') } }));
+    } finally {
+      window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: false }));
     }
   };
 
@@ -734,7 +738,7 @@ export default function CctvTab({
         type="file"
         ref={importFileInputRef}
         className="hidden"
-        accept=".xlsx,.xls,.csv,.txt"
+        accept=".xlsx,.xls,.csv,.txt,.json"
         onChange={e => {
           if (e.target.files && e.target.files[0]) {
             handleImportFile(e.target.files[0], 'append');

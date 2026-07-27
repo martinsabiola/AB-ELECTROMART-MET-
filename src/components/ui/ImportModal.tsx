@@ -157,13 +157,13 @@ export default function ImportModal({ boardName, boardPhase, existingCount, onIm
         >
           <div className="text-3xl mb-2">{isReading ? '⏳' : '📁'}</div>
           <div className="text-sm text-[#a0aec0] font-semibold">
-            {isReading ? 'Reading file...' : 'Drag & drop Excel, CSV, or Tab-Delimited text file here'}
+            {isReading ? 'Reading file...' : 'Drag & drop Excel, CSV, JSON, or Tab-Delimited text file here'}
           </div>
-          <div className="text-xs text-[#718096] mt-1">Supports .xlsx, .xls, .csv, .txt files</div>
+          <div className="text-xs text-[#718096] mt-1">Supports .xlsx, .xls, .csv, .txt, .json files</div>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".xlsx,.xls,.csv,.txt,text/plain,text/csv"
+            accept=".xlsx,.xls,.csv,.txt,.json,text/plain,text/csv,application/json"
             style={{ display: 'none' }}
             onChange={e => {
               const file = e.target.files?.[0];

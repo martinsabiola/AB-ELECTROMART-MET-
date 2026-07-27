@@ -47,6 +47,7 @@ export const DEFAULT_MEP_METADATA: Record<string, DropdownMeta> = {
   'Mount Types': { tabId: 'electrical', role: 'options' },
   'Lighting Controls': { tabId: 'electrical', role: 'options' },
   'Socket Types': { tabId: 'electrical', role: 'options' },
+  'Socket Ratings': { tabId: 'electrical', role: 'variance' },
   'Socket Sizing / Rating': { tabId: 'electrical', role: 'variance' },
   'Socket Fix Styles': { tabId: 'electrical', role: 'options' },
   'Socket Mounts': { tabId: 'electrical', role: 'options' },

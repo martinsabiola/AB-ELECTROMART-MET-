@@ -85,7 +85,9 @@ export default function IndustrialTab({ settings }: IndustrialTabProps) {
   const importFileInputRef = useRef<HTMLInputElement>(null);
 
   // File Import Logic
-  const handleImportFile = (file: File, mode: 'append' | 'replace') => {
+  const handleImportFile = async (file: File, mode: 'append' | 'replace') => {
+    window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: true }));
+    await new Promise(r => setTimeout(r, 100));
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -97,59 +99,70 @@ export default function IndustrialTab({ settings }: IndustrialTabProps) {
           const wb = XLSX.read(new Uint8Array(ab as ArrayBuffer), { type: 'array' });
           const ws = wb.Sheets[wb.SheetNames[0]];
           rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }) as any[][];
+        } else if (ext === 'json') {
+          const text = new TextDecoder().decode(ab as ArrayBuffer);
+          const p = JSON.parse(text);
+          if (Array.isArray(p.industrialLoads) && p.industrialLoads.length > 0) {
+            setLoads(prev => mode === 'replace' ? p.industrialLoads : [...prev, ...p.industrialLoads]);
+            window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: `📥 Restored ${p.industrialLoads.length} industrial loads` } }));
+            return;
+          }
         } else {
           const text = new TextDecoder().decode(ab as ArrayBuffer);
           rows = text.split('\n').map(line => line.split(ext === 'csv' ? ',' : '\t').map(cell => cell.trim().replace(/^"|"$/g, '')));
         }
         
-        if (rows.length < 2) return;
-        
-        const header = rows[0].map(h => String(h).trim().toLowerCase());
-        const mappedLoads: IndustrialLoad[] = [];
-        
-        for (let i = 1; i < rows.length; i++) {
-          const row = rows[i];
-          if (row.length === 0 || !row[0]) continue;
+        if (rows.length >= 2) {
+          const header = rows[0].map(h => String(h).trim().toLowerCase());
+          const mappedLoads: IndustrialLoad[] = [];
           
-          const valOf = (colNames: string[]) => {
-            for (const colName of colNames) {
-              const idx = header.indexOf(colName.toLowerCase());
-              if (idx !== -1) return row[idx];
-            }
-            return undefined;
-          };
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (row.length === 0 || !row[0]) continue;
+            
+            const valOf = (colNames: string[]) => {
+              for (const colName of colNames) {
+                const idx = header.indexOf(colName.toLowerCase());
+                if (idx !== -1) return row[idx];
+              }
+              return undefined;
+            };
+            
+            const description = String(valOf(['location / room', 'description', 'location', 'room']) || row[0] || '').trim();
+            if (!description) continue;
+            
+            const loadType = String(valOf(['load type', 'type']) || 'Motor');
+            const voltage = parseInt(String(valOf(['voltage (v)', 'voltage', 'volt']))) || 400;
+            const kw = parseFloat(String(valOf(['power (kw)', 'power', 'kw']))) || 1.5;
+            const pf = parseFloat(String(valOf(['pf', 'power factor']))) || 0.85;
+            const eff = parseFloat(String(valOf(['efficiency %', 'eff %', 'efficiency', 'eff']))) || 0.90;
+            const qty = parseInt(String(valOf(['qty', 'quantity']))) || 1;
+            const demandFactor = parseFloat(String(valOf(['demand factor', 'df']))) || 1.0;
+            const notes = String(valOf(['notes', 'remark']) || '');
+            
+            mappedLoads.push({
+              id: Math.random().toString(36).slice(2, 8).toUpperCase(),
+              description,
+              loadType,
+              voltage,
+              kw,
+              pf,
+              eff: eff > 1 ? eff / 100 : eff,
+              qty,
+              demandFactor,
+              notes
+            });
+          }
           
-          const description = String(valOf(['location / room', 'description', 'location', 'room']) || row[0] || '').trim();
-          if (!description) continue;
-          
-          const loadType = String(valOf(['load type', 'type']) || 'Motor');
-          const voltage = parseInt(String(valOf(['voltage (v)', 'voltage', 'volt']))) || 400;
-          const kw = parseFloat(String(valOf(['power (kw)', 'power', 'kw']))) || 1.5;
-          const pf = parseFloat(String(valOf(['pf', 'power factor']))) || 0.85;
-          const eff = parseFloat(String(valOf(['efficiency %', 'eff %', 'efficiency', 'eff']))) || 0.90;
-          const qty = parseInt(String(valOf(['qty', 'quantity']))) || 1;
-          const demandFactor = parseFloat(String(valOf(['demand factor', 'df']))) || 1.0;
-          const notes = String(valOf(['notes', 'remark']) || '');
-          
-          mappedLoads.push({
-            id: Math.random().toString(36).slice(2, 8).toUpperCase(),
-            description,
-            loadType,
-            voltage,
-            kw,
-            pf,
-            eff: eff > 1 ? eff / 100 : eff, // Normalize percentage vs fraction
-            qty,
-            demandFactor,
-            notes
-          });
-        }
-        
-        if (mappedLoads.length > 0) {
-          setLoads(prev => mode === 'replace' ? mappedLoads : [...prev, ...mappedLoads]);
+          if (mappedLoads.length > 0) {
+            setLoads(prev => mode === 'replace' ? mappedLoads : [...prev, ...mappedLoads]);
+            window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: `📥 Imported ${mappedLoads.length} industrial loads` } }));
+          }
         }
       } catch (err: any) {
-        alert('Failed to parse file: ' + err.message);
+        window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: false, text: 'Import failed: ' + (err.message || 'invalid file') } }));
+      } finally {
+        window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: false }));
       }
     };
     reader.readAsArrayBuffer(file);
@@ -767,7 +780,7 @@ export default function IndustrialTab({ settings }: IndustrialTabProps) {
         type="file"
         ref={importFileInputRef}
         className="hidden"
-        accept=".xlsx,.xls,.csv,.txt"
+        accept=".xlsx,.xls,.csv,.txt,.json"
         onChange={e => {
           if (e.target.files && e.target.files[0]) {
             handleImportFile(e.target.files[0], 'append');

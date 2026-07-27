@@ -45,14 +45,18 @@ export default function PlumbingTab({ fixtures, setFixtures, settings, setSettin
   // File Import Logic
   const handleImportFile = async (file: File, mode: 'append' | 'replace') => {
     try {
+      window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: true }));
+      await new Promise(r => setTimeout(r, 100));
       const res = await parseMEPFile(file, [], settings);
       if (res.plumbingFixtures && res.plumbingFixtures.length > 0) {
         setFixtures(prev => mode === 'replace' ? res.plumbingFixtures! : [...prev, ...res.plumbingFixtures!]);
       }
       window.dispatchEvent(new CustomEvent('trigger-mep-update-workspace', { detail: res }));
-      window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: res.summaryMessage } }));
+      window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: `📥 ${res.summaryMessage}` } }));
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: false, text: 'Import failed: ' + (err.message || 'invalid file') } }));
+    } finally {
+      window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: false }));
     }
   };
 
@@ -681,7 +685,7 @@ export default function PlumbingTab({ fixtures, setFixtures, settings, setSettin
         type="file"
         ref={importFileInputRef}
         className="hidden"
-        accept=".xlsx,.xls,.csv,.txt"
+        accept=".xlsx,.xls,.csv,.txt,.json"
         onChange={e => {
           if (e.target.files && e.target.files[0]) {
             handleImportFile(e.target.files[0], 'append');

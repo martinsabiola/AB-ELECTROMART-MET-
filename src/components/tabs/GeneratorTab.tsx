@@ -410,15 +410,19 @@ export default function GeneratorTab({
   // File Import / Export Handlers
   const handleImportFile = async (file: File, mode: 'append' | 'replace') => {
     try {
+      window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: true }));
+      await new Promise(r => setTimeout(r, 100));
       const res = await parseMEPFile(file, boards, settings);
       if (res.genLoads && res.genLoads.length > 0) {
         setLoads(prev => mode === 'replace' ? res.genLoads! : [...prev, ...res.genLoads!]);
       }
       if (res.genFuel) setFuelType(res.genFuel);
       if (typeof res.genPF === 'number') setGenPF(res.genPF);
-      window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: res.summaryMessage } }));
+      window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: true, text: `📥 ${res.summaryMessage}` } }));
     } catch (err: any) {
       window.dispatchEvent(new CustomEvent('trigger-mep-toast', { detail: { ok: false, text: 'Import failed: ' + (err.message || 'invalid file') } }));
+    } finally {
+      window.dispatchEvent(new CustomEvent('trigger-mep-import-loading', { detail: false }));
     }
   };
 

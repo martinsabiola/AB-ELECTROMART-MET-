@@ -918,14 +918,20 @@ export default function App() {
     }
   };
 
+  const [isImporting, setIsImporting] = useState(false);
+
   const handleUniversalFileImport = async (file: File) => {
+    setIsImporting(true);
     try {
       trackHistory(boards);
+      await new Promise(r => setTimeout(r, 120));
       const res = await parseMEPFile(file, boards, settings);
       applyWorkspaceUpdate(res);
-      showToast(true, res.summaryMessage);
+      showToast(true, `📥 ${res.summaryMessage}`);
     } catch (err: any) {
       showToast(false, 'Import failed: ' + (err.message || 'invalid file format'));
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -945,15 +951,21 @@ export default function App() {
     const handleUniversalImportTrigger = () => {
       fileInputRef.current?.click();
     };
+    const handleImportLoading = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setIsImporting(Boolean(customEvent.detail));
+    };
 
     window.addEventListener('trigger-mep-update-workspace', handleWorkspaceUpdate);
     window.addEventListener('trigger-mep-toast', handleToast);
     window.addEventListener('trigger-mep-universal-import', handleUniversalImportTrigger);
+    window.addEventListener('trigger-mep-import-loading', handleImportLoading);
 
     return () => {
       window.removeEventListener('trigger-mep-update-workspace', handleWorkspaceUpdate);
       window.removeEventListener('trigger-mep-toast', handleToast);
       window.removeEventListener('trigger-mep-universal-import', handleUniversalImportTrigger);
+      window.removeEventListener('trigger-mep-import-loading', handleImportLoading);
     };
   }, [boards, settings]);
 
@@ -1780,6 +1792,20 @@ export default function App() {
 
         </div>
       </div>
+
+      {/* Loading Overlay when Importing File Data */}
+      {isImporting && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[99999] flex flex-col items-center justify-center p-6 transition-all duration-300">
+          <div className="bg-[#111625] border border-sky-500/40 rounded-2xl p-7 max-w-sm w-full text-center shadow-[0_0_40px_rgba(56,189,248,0.25)] flex flex-col items-center animate-in fade-in zoom-in-95">
+            <div className="relative mb-4 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full border-4 border-sky-500/20 border-t-sky-400 animate-spin" />
+              <div className="absolute text-sky-400 font-black text-xs">MEP</div>
+            </div>
+            <h3 className="text-base font-extrabold text-white tracking-wide">Reading & Processing Import File...</h3>
+            <p className="text-xs text-sky-300/80 mt-1.5 font-mono">Parsing worksheets into active engineering tables</p>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification Floating Banner - Fixed Overlay so it never shifts layout or buttons */}
       {toast && (
