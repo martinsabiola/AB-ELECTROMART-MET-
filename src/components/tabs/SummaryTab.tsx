@@ -1,6 +1,6 @@
 import React from 'react';
 import { Board, HvacUnit, PlumbingFixture, FireZone, ProjectSettings, ROOM_LUX_DATABASE, SolarLoad, SolarConfig, GenLoad, SmartDevice, CctvCamera } from '../../types';
-import { exportToExcel, exportActiveBoardToCSV, exportActiveBoardToXLSX, exportActiveBoardToTXT } from '../../utils/exportUtils';
+import { exportToExcel, exportActiveBoardToCSV, exportActiveBoardToXLSX, exportActiveBoardToTXT, getCircuitCBRating } from '../../utils/exportUtils';
 import { Plus, Trash2, Edit, RotateCcw, RotateCw, Check, X, FileSpreadsheet, Copy, Settings, FileText, Printer, ShieldAlert } from 'lucide-react';
 
 interface SummaryTabProps {
@@ -418,7 +418,7 @@ function BemeInteractiveTable({
       if (seenCids.has(c.circuitId)) return;
       seenCids.add(c.circuitId);
 
-      const rating = c.cb || 0;
+      const rating = getCircuitCBRating(c, settings, b.phase === '3-Phase');
       if (rating > 0) {
         const key = `MCB ${rating}A`;
         if (!mcbAggs[key]) {
@@ -633,7 +633,7 @@ function BemeInteractiveTable({
     const uniqueCircuitsMap = new Map<string, { cb: number; isThreePhase: boolean }>();
 
     b.circuits.forEach(c => {
-      const rating = c.cb || 0;
+      const rating = getCircuitCBRating(c, settings, b.phase === '3-Phase');
       totalCableLength += (c.cableLength || 0);
       if (rating <= 0) return;
 
@@ -2707,8 +2707,15 @@ function BemeInteractiveTable({
 
       {/* DYNAMIC FORMAL PRINTABLE TENDER MODAL PREVIEW (IFRAME SAFE) */}
       {isQuotationPreviewOpen && (
-        <div className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-          <div className="bg-[#0d1322]/95 backdrop-blur-sm border border-slate-700/60 rounded-2xl max-w-5xl w-full h-[90vh] shadow-2xl shadow-black/80 relative overflow-hidden flex flex-col">
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsQuotationPreviewOpen(false);
+            }
+          }}
+        >
+          <div className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl max-w-5xl w-full h-[90vh] shadow-2xl shadow-black/80 relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
             
             {/* Header / Controls */}
             <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
@@ -2991,8 +2998,15 @@ GRAND TOTAL CONTRACT QUOTE: ${currencySymbol}${grandTotalCost.toFixed(2)}`;
 
       {/* Modal - Add Custom Item */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-          <div className="bg-[#0d1322]/95 backdrop-blur-sm border border-slate-700/60 rounded-2xl max-w-lg w-full shadow-2xl shadow-black/80 relative overflow-hidden flex flex-col">
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsAddModalOpen(false);
+            }
+          }}
+        >
+          <div className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl max-w-lg w-full shadow-2xl shadow-black/80 relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
               <div className="font-bold text-slate-100 text-sm flex items-center gap-2">
                 <Plus size={16} className="text-cyan-400" /> Add Custom BEME Item Row
@@ -3107,8 +3121,15 @@ GRAND TOTAL CONTRACT QUOTE: ${currencySymbol}${grandTotalCost.toFixed(2)}`;
 
       {/* Modal - Edit Item */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-          <div className="bg-[#0d1322]/95 backdrop-blur-sm border border-slate-700/60 rounded-2xl max-w-lg w-full shadow-2xl shadow-black/80 relative overflow-hidden flex flex-col">
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsEditModalOpen(false);
+            }
+          }}
+        >
+          <div className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl max-w-lg w-full shadow-2xl shadow-black/80 relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
               <div className="font-bold text-slate-100 text-sm flex items-center gap-2">
                 <Edit size={16} className="text-amber-400" /> Edit BEME Item Details

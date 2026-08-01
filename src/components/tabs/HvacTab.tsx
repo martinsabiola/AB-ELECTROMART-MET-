@@ -1025,7 +1025,7 @@ export default function HvacTab({ units, setUnits, boards, setBoards, settings, 
       newUnitsCopy.forEach(unit => {
         const isAlreadySynced = newBoards.some(b => b.circuits.some(c => c.id === unit.linkedCircuitId));
         if (!isAlreadySynced) {
-          const newId = 'LNK-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+          const newId = unit.linkedCircuitId || ('LNK-' + (unit.id || Math.random().toString(36).slice(2, 8).toUpperCase()));
           unit.linkedCircuitId = newId;
           unitsChanged = true;
 
@@ -1103,8 +1103,12 @@ export default function HvacTab({ units, setUnits, boards, setBoards, settings, 
     }
   };
 
+  const prevSyncUnitsRef = useRef<string>('');
   useEffect(() => {
     if (boards && setBoards && units.length > 0) {
+      const unitsJson = JSON.stringify(units);
+      if (prevSyncUnitsRef.current === unitsJson) return;
+      prevSyncUnitsRef.current = unitsJson;
       syncHvacToElectrical(units, boards, setBoards);
     }
   }, [units]);
@@ -2702,7 +2706,7 @@ export default function HvacTab({ units, setUnits, boards, setBoards, settings, 
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 15 }}
               transition={{ type: "spring", duration: 0.3 }}
-              className="bg-[#0d1322]/95 backdrop-blur-sm border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/80 max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden text-white my-8"
+              className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/80 max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden text-white my-8 animate-in zoom-in-95 duration-200"
             >
               {/* Header */}
               <div className="px-6 py-4 border-b border-slate-800/80 flex justify-between items-center bg-[#12192b]/95 shrink-0">

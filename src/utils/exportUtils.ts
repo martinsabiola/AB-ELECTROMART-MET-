@@ -80,12 +80,22 @@ export function calculateCB(watts: number, qty: number, voltage: number, pf: num
     const current = totalW / 230;
     return CB_SIZES.find(f => f >= current) || 100;
   }
+
+  if (loadType === 'Air Conditioner' || loadType === 'AC') {
+    const effectiveWatts = totalW || 1500;
+    const current = isThreePhase
+      ? effectiveWatts / (Math.sqrt(3) * (voltage || 400) * (pf || 0.9))
+      : effectiveWatts / ((voltage || 230) * (pf || 0.9));
+    const cb = CB_SIZES.find(f => f >= current * 1.75) || 100;
+    return Math.max(16, cb);
+  }
+
   if (!totalW) return 6;
 
   let multiplier = 1.25;
   if (loadType === 'Motor') multiplier = 1.75;      // High inrush current for motors
   if (loadType === 'Welding') multiplier = 2.0;      // Highly inductive transient arc welder load
-  if (loadType === 'Compressor') multiplier = 1.5;   // Heavy starter compressor
+  if (loadType === 'Compressor') multiplier = 1.75;   // Heavy starter compressor
   if (loadType === 'Pump') multiplier = 1.4;         // Submersible or high-head hydraulic pump
   if (loadType === 'Industrial Socket') {
     const current = isThreePhase ? totalW / (Math.sqrt(3) * voltage * pf) : totalW / (voltage * pf);
@@ -98,6 +108,19 @@ export function calculateCB(watts: number, qty: number, voltage: number, pf: num
     ? totalW / (Math.sqrt(3) * voltage * pf)
     : totalW / (voltage * pf);
   return CB_SIZES.find(f => f >= current * multiplier) || 100;
+}
+
+export function getCircuitCBRating(c: any, settings?: any, isThreePhaseBoard?: boolean): number {
+  if (c.cb && c.cb > 0) return c.cb;
+  const isLighting = c.loadType === 'Lighting';
+  const is3Ph = isThreePhaseBoard || c.phase === '3-Phase' || (c.loadType === 'Dedicated' && (c.dedicatedType === 'Three Phase' || (c.fixtureVariance && c.fixtureVariance.includes('3ph'))));
+  const voltage = is3Ph ? ((settings && settings.phaseVoltage3P) || 400) : ((settings && settings.voltage) || 230);
+  const pf = (settings && settings.powerFactor) || 0.9;
+  const activeQty = isLighting ? 1 : (c.qty || 1);
+  const acWatts = (c.watts && c.watts > 0) ? c.watts : (c.acHp ? Math.round(c.acHp * 1500) : 3000);
+  const watts = isLighting ? (c.watts || 100) : (c.loadType === 'Air Conditioner' ? acWatts : (c.watts || (c.loadType === 'Sockets' ? 200 : 100)));
+  const rating = calculateCB(watts, activeQty, voltage, pf, is3Ph, c.loadType || 'Dedicated');
+  return rating > 0 ? rating : 10;
 }
 
 export function getCUFromRoomIndex(ri: number): number {
@@ -739,7 +762,7 @@ export function exportToExcel(
       if (seenCids.has(c.circuitId)) return;
       seenCids.add(c.circuitId);
       
-      const rating = c.cb || 0;
+      const rating = getCircuitCBRating(c);
       if (rating > 0) {
         const key = `MCB ${rating}A`;
         if (!mcbAggs[key]) {
@@ -833,7 +856,7 @@ export function exportToExcel(
     const uniqueCircuitsMap = new Map<string, { cb: number; isThreePhase: boolean }>();
 
     b.circuits.forEach(c => {
-      const rating = c.cb || 0;
+      const rating = getCircuitCBRating(c);
       totalCableLength += (c.cableLength || 0);
       if (rating <= 0) return;
 

@@ -1405,15 +1405,22 @@ export const SelfDesignTab: React.FC<SelfDesignTabProps> = ({ settings, tabId = 
 
       {/* EDIT COMPONENT / WIDGET MODAL */}
       {isEditModalOpen && selectedItem && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0d1322]/95 border border-slate-700/60 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800 bg-[#12192b]/95 shrink-0">
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center p-4 z-[9999] animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsEditModalOpen(false);
+            }
+          }}
+        >
+          <div className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl w-full max-w-lg shadow-2xl shadow-black/80 relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
               <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
                 <span>⚙️</span> Edit Properties – {selectedItem.label}
               </h3>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="text-gray-400 hover:text-white text-xs font-bold"
+                className="w-7 h-7 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/60 flex items-center justify-center text-sm font-bold transition-all cursor-pointer"
               >
                 ✕
               </button>
@@ -1526,13 +1533,23 @@ export const SelfDesignTab: React.FC<SelfDesignTabProps> = ({ settings, tabId = 
 
       {/* BOQ / BEME MODAL */}
       {isBoqOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0d1322]/95 border border-slate-700/60 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800 bg-[#12192b]/95 shrink-0">
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center p-4 z-[9999] animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsBoqOpen(false);
+            }
+          }}
+        >
+          <div className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl w-full max-w-2xl max-h-[90vh] shadow-2xl shadow-black/80 relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
               <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
                 <FileText className="w-4 h-4 text-emerald-400" /> Bill of Quantities (BOQ) / BEME Schedule
               </h3>
-              <button onClick={() => setIsBoqOpen(false)} className="text-gray-400 hover:text-white text-xs font-bold">
+              <button 
+                onClick={() => setIsBoqOpen(false)} 
+                className="w-7 h-7 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/60 flex items-center justify-center text-sm font-bold transition-all cursor-pointer"
+              >
                 ✕
               </button>
             </div>

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Zap, Eye, EyeOff, Layout, ChevronDown, ChevronUp, Cpu, Layers, Copy, Trash2, Search } from 'lucide-react';
 import { Board, Circuit, ProjectSettings, ROOM_LUX_DATABASE, getTargetLuxForRoom, getRoundingValue, HvacUnit } from '../../types';
-import { getCableColors, calculateCB, exportActiveBoardToCSV, exportActiveBoardToXLSX, exportActiveBoardToTXT, getLightingSubCircuitMap } from '../../utils/exportUtils';
+import { getCableColors, calculateCB, getCircuitCBRating, exportActiveBoardToCSV, exportActiveBoardToXLSX, exportActiveBoardToTXT, getLightingSubCircuitMap } from '../../utils/exportUtils';
 import ImportModal from '../ui/ImportModal';
 import IndustrialTab from './IndustrialTab';
 import { calculateAcHp } from './HvacTab';
@@ -145,7 +145,7 @@ export const DEFAULT_DROPDOWNS: Record<string, string[]> = {
   'AC Fix Styles': ['Inverter', 'Non Inverter'],
   'AC Mounts': ['In-Wall', 'Standing', 'Ceiling'],
   'AC Controls': ['Smart', 'Non Smart'],
-  'Dedicated Types': ['Single Phase', 'Three Phase'],
+  'Dedicated Types': ['1 Phase', '3 Phase'],
   'Dedicated Fix Styles': ['Indoor', 'Outdoor'],
   'Dedicated 3Phase Variances': [
     '13A 3ph Industrial',
@@ -199,6 +199,16 @@ export const WIRE_SIZES = DEFAULT_DROPDOWNS['Wire Sizes (mm²)'];
 export const CABLE_CORES = DEFAULT_DROPDOWNS['Cable Cores'];
 export const SWITCH_TYPES = DEFAULT_DROPDOWNS['Switch Types'];
 export const CB_SIZES = [6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 400, 630];
+
+export function is3PhaseType(type?: string): boolean {
+  if (!type) return false;
+  return type === '3 Phase' || type === 'Three Phase' || type === '3-Phase';
+}
+
+export function is1PhaseType(type?: string): boolean {
+  if (!type) return false;
+  return type === '1 Phase' || type === 'Single Phase' || type === '1-Phase';
+}
 
 // Socket Appliance / Variance Actual Wattage Ratings Mapping
 export const SOCKET_APPLIANCE_WATTS_MAP: Record<string, number> = {
@@ -704,12 +714,14 @@ export default function ElectricalTab({
         const hasDoubleSockets = parsed['Socket Types'] && parsed['Socket Types'].includes('Double');
         const hasNewRatings = parsed['Socket Ratings'] && parsed['Socket Ratings'].includes('13A');
         const hasNewVariances = parsed['Socket Sizing / Rating'] && parsed['Socket Sizing / Rating'].includes('Airfryer');
+        const hasNewDedicated = parsed['Dedicated Types'] && parsed['Dedicated Types'].includes('1 Phase');
         return {
           ...DEFAULT_DROPDOWNS,
           ...parsed,
           'Socket Types': hasDoubleSockets ? parsed['Socket Types'] : DEFAULT_DROPDOWNS['Socket Types'],
           'Socket Ratings': hasNewRatings ? parsed['Socket Ratings'] : DEFAULT_DROPDOWNS['Socket Ratings'],
           'Socket Sizing / Rating': hasNewVariances ? parsed['Socket Sizing / Rating'] : DEFAULT_DROPDOWNS['Socket Sizing / Rating'],
+          'Dedicated Types': hasNewDedicated ? parsed['Dedicated Types'] : DEFAULT_DROPDOWNS['Dedicated Types'],
         };
       } catch (e) {
         // fallback
@@ -1012,10 +1024,9 @@ export default function ElectricalTab({
   const phaseLoads = isThreePhase
     ? Pi.reduce((acc, p) => {
         const is3Ph = (c: any) =>
-          (c.loadType === 'Dedicated' && c.dedicatedType === 'Three Phase') ||
-          (c.loadType === 'Air Conditioner' && (c.phase === 'Three Phase' || c.phase === '3-Phase')) ||
-          c.phase === 'Three Phase' ||
-          c.phase === '3-Phase';
+          (c.loadType === 'Dedicated' && is3PhaseType(c.dedicatedType)) ||
+          (c.loadType === 'Air Conditioner' && is3PhaseType(c.phase)) ||
+          is3PhaseType(c.phase);
 
         // regular single phase loads on R/Y/B
         const regularSum = currentBoard.circuits
@@ -1101,8 +1112,8 @@ export default function ElectricalTab({
               if (c.phase !== 'L') {
                 updatedCircuit.phase = 'L';
               }
-              if (c.loadType === 'Dedicated' && c.dedicatedType === 'Three Phase') {
-                updatedCircuit.dedicatedType = 'Single Phase';
+              if (c.loadType === 'Dedicated' && is3PhaseType(c.dedicatedType)) {
+                updatedCircuit.dedicatedType = '1 Phase';
                 updatedCircuit.cableCores = '3 Cores';
               }
               return updatedCircuit;
@@ -1195,8 +1206,9 @@ export default function ElectricalTab({
           unitsChanged = true;
         }
       } else {
+        const deterministicId = circuit.id ? `HVAC-${circuit.id}` : ('HVAC-' + Math.random().toString(36).slice(2, 8).toUpperCase());
         const newUnit: HvacUnit = {
-          id: 'HVAC-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+          id: deterministicId,
           zone: circuit.room || 'Air Conditioner Zone',
           system: mappedSystem,
           length: circuit.roomL,
@@ -1245,8 +1257,12 @@ export default function ElectricalTab({
     }
   };
 
+  const prevSyncBoardsRef = useRef<string>('');
   useEffect(() => {
     if (boards && hvacUnits && setHvacUnits) {
+      const boardsJson = JSON.stringify(boards);
+      if (prevSyncBoardsRef.current === boardsJson) return;
+      prevSyncBoardsRef.current = boardsJson;
       syncElectricalToHvac(boards, hvacUnits, setHvacUnits);
     }
   }, [boards]);
@@ -1270,7 +1286,7 @@ export default function ElectricalTab({
     socketVariance: 'Sockets',
     acType: 'Split',
     acFixtureStyle: 'Inverter',
-    dedicatedType: 'Single Phase',
+    dedicatedType: '1 Phase',
     dedicatedFixtureStyle: 'Indoor',
     watts: '100',
     qty: '',
@@ -1326,7 +1342,7 @@ export default function ElectricalTab({
       defaultWatts = '1500';
     } else if (loadType === 'Dedicated') {
       defaultWire = '2.5';
-      defaultCores = newCircuitForm.dedicatedType === 'Three Phase' ? '4 Cores' : '3 Cores';
+      defaultCores = is3PhaseType(newCircuitForm.dedicatedType) ? '4 Cores' : '3 Cores';
       defaultWatts = '2000';
     } else if (loadType === 'Motor') {
       defaultWire = '4';
@@ -1364,7 +1380,7 @@ export default function ElectricalTab({
       wire: defaultWire,
       cableCores: defaultCores,
       watts: defaultWatts,
-      fixtureVariance: loadType === 'Lighting' ? 'None' : (loadType === 'Dedicated' && prev.dedicatedType === 'Three Phase' ? '13A 3ph Industrial' : 'None')
+      fixtureVariance: loadType === 'Lighting' ? 'None' : (loadType === 'Dedicated' && is3PhaseType(prev.dedicatedType) ? '13A 3ph Industrial' : 'None')
     }));
   };
 
@@ -1387,7 +1403,7 @@ export default function ElectricalTab({
       socketVariance: 'Sockets',
       acType: 'Split',
       acFixtureStyle: 'Inverter',
-      dedicatedType: 'Single Phase',
+      dedicatedType: '1 Phase',
       dedicatedFixtureStyle: 'Indoor',
       watts: '100',
       qty: '',
@@ -1434,7 +1450,7 @@ export default function ElectricalTab({
       socketVariance: c.socketVariance || 'Sockets',
       acType: c.acType || 'Split',
       acFixtureStyle: c.acFixtureStyle || 'Inverter',
-      dedicatedType: c.dedicatedType || 'Single Phase',
+      dedicatedType: c.dedicatedType || '1 Phase',
       dedicatedFixtureStyle: c.dedicatedFixtureStyle || 'Indoor',
       watts: String(c.watts ?? 100),
       qty: c.qty !== undefined ? String(c.qty) : '',
@@ -1512,7 +1528,7 @@ export default function ElectricalTab({
 
                 lightingType: isLighting ? newCircuitForm.lightingType : undefined,
                 fixtureStyle: isLighting ? newCircuitForm.fixtureStyle : undefined,
-                fixtureVariance: isLighting ? newCircuitForm.fixtureVariance : (isDedicated && newCircuitForm.dedicatedType === 'Three Phase' ? newCircuitForm.fixtureVariance : undefined),
+                fixtureVariance: isLighting ? newCircuitForm.fixtureVariance : (isDedicated && is3PhaseType(newCircuitForm.dedicatedType) ? newCircuitForm.fixtureVariance : undefined),
                 mountType: isLighting ? newCircuitForm.mountType : undefined,
                 controlType: isLighting ? newCircuitForm.controlType : undefined,
 
@@ -1559,7 +1575,7 @@ export default function ElectricalTab({
 
         lightingType: isLighting ? newCircuitForm.lightingType : undefined,
         fixtureStyle: isLighting ? newCircuitForm.fixtureStyle : undefined,
-        fixtureVariance: isLighting ? newCircuitForm.fixtureVariance : (isDedicated && newCircuitForm.dedicatedType === 'Three Phase' ? newCircuitForm.fixtureVariance : undefined),
+        fixtureVariance: isLighting ? newCircuitForm.fixtureVariance : (isDedicated && is3PhaseType(newCircuitForm.dedicatedType) ? newCircuitForm.fixtureVariance : undefined),
         mountType: isLighting ? newCircuitForm.mountType : undefined,
         controlType: isLighting ? newCircuitForm.controlType : undefined,
 
@@ -2159,58 +2175,63 @@ export default function ElectricalTab({
       ) : (
         <>
           {/* Panel Tab selector */}
-      <div className="flex gap-2 mb-4 flex-wrap items-center">
-        {boards.map((b, idx) => (
-          <button
-            key={b.id}
-            onClick={() => setActiveIndex(idx)}
-            className={`px-3 py-1.5 rounded-md border text-xs font-semibold cursor-pointer transition-all ${
-              idx === activeIndex
-                ? 'border-blue-500 bg-[#1e3a5f] text-blue-300 shadow-md'
-                : 'border-[#2d3748] bg-[#1a1f2e] text-[#718096] hover:text-[#e2e8f0]'
-            }`}
-          >
-            {b.name}
-            <span
-              className={`ml-2 text-[10px] px-1 rounded ${
-                b.phase === '3-Phase' ? 'bg-[#1a3a5c] text-blue-300' : 'bg-[#2d1b3d] text-purple-300'
+      <div className="flex gap-2 mb-4 flex-wrap items-center justify-between">
+        <div className="flex gap-2 flex-wrap items-center">
+          {boards.map((b, idx) => (
+            <button
+              key={b.id}
+              onClick={() => setActiveIndex(idx)}
+              className={`px-3.5 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 h-8 ${
+                idx === activeIndex
+                  ? 'border-blue-500 bg-[#1e3a5f] text-blue-300 shadow-md font-bold'
+                  : 'border-[#2d3748] bg-[#1a1f2e] text-[#a0aec0] hover:text-[#e2e8f0] hover:bg-[#232d3f]'
               }`}
             >
-              {b.phase}
-            </span>
+              <span>{b.name}</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                  b.phase === '3-Phase' ? 'bg-[#1a3a5c] text-blue-300 border border-blue-500/30' : 'bg-[#2d1b3d] text-purple-300 border border-purple-500/30'
+                }`}
+              >
+                {b.phase}
+              </span>
+            </button>
+          ))}
+          <button
+            onClick={addPanel}
+            className="px-3.5 py-1.5 rounded-lg border border-dashed border-[#276749] bg-[#14291e] text-emerald-400 hover:text-emerald-300 hover:bg-[#1b3829] cursor-pointer text-xs font-semibold flex items-center gap-1.5 h-8 transition-all"
+            title="Add a new distribution panel"
+          >
+            <span>⊕</span> Panel
           </button>
-        ))}
-        <button
-          onClick={addPanel}
-          className="px-3 py-1.5 rounded-md border border-dashed border-[#276749] bg-[#1a3a1a] text-green-400 hover:text-green-300 cursor-pointer text-xs font-semibold"
-        >
-          ⊕ Panel
-        </button>
-        <button
-          onClick={() => {
-            trackHistory(boards);
-            const copy: Board = {
-              ...currentBoard,
-              id: _t(),
-              name: currentBoard.name + '-Copy',
-              circuits: currentBoard.circuits.map(c => ({ ...c, id: _t() })),
-            };
-            setBoards(prev => [...prev, copy]);
-            setActiveIndex(boards.length);
-          }}
-          className="px-3 py-1.5 rounded-md border border-dashed border-[#2d4a6a] bg-[#1a2a3a] text-blue-400 hover:text-blue-300 cursor-pointer text-xs font-semibold"
-          title="Duplicate active panel"
-        >
-          🗐 Duplicate
-        </button>
+          <button
+            onClick={() => {
+              trackHistory(boards);
+              const copy: Board = {
+                ...currentBoard,
+                id: _t(),
+                name: currentBoard.name + '-Copy',
+                circuits: currentBoard.circuits.map(c => ({ ...c, id: _t() })),
+              };
+              setBoards(prev => [...prev, copy]);
+              setActiveIndex(boards.length);
+            }}
+            className="px-3.5 py-1.5 rounded-lg border border-dashed border-[#2d4a6a] bg-[#16253b] text-blue-400 hover:text-blue-300 hover:bg-[#1e324f] cursor-pointer text-xs font-semibold flex items-center gap-1.5 h-8 transition-all"
+            title="Duplicate active panel"
+          >
+            <span>🗐</span> Duplicate
+          </button>
+        </div>
 
-        <button
-          onClick={() => setShowSettings(true)}
-          className="ml-auto px-3 py-1.5 rounded-md border border-blue-900 bg-[#122035] text-blue-400 hover:text-blue-300 hover:bg-[#1a304e] cursor-pointer text-xs font-semibold flex items-center gap-1.5 transition-colors"
-          title="Open Electrical Discipline & Sizing Settings"
-        >
-          <span>⚙️</span> Sizing Parameters
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowSettings(true)}
+            className="px-3.5 py-1.5 rounded-lg border border-blue-900/70 bg-[#122035] text-blue-300 hover:text-blue-200 hover:bg-[#1a304e] cursor-pointer text-xs font-semibold flex items-center gap-1.5 h-8 transition-all"
+            title="Open Electrical Discipline Settings"
+          >
+            <span>⚙️</span> Settings
+          </button>
+        </div>
       </div>
 
       {/* discipline specific electrical settings overlay compact box */}
@@ -2232,7 +2253,7 @@ export default function ElectricalTab({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 15 }}
               transition={{ type: "spring", duration: 0.3 }}
-              className="bg-[#0d1322]/95 backdrop-blur-sm border border-slate-700/60 rounded-2xl max-w-4xl w-full shadow-2xl shadow-black/80 relative max-h-[90vh] flex flex-col overflow-hidden"
+              className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl max-w-4xl w-full shadow-2xl shadow-black/80 relative max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
             >
             {/* Header */}
             <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
@@ -2615,7 +2636,7 @@ export default function ElectricalTab({
                                     } else if (col === 'switchType') v = c.switchType || '';
                                     else if (col === 'notes') v = c.notes || '';
                                     v = v.trim();
-                                    if (v && v !== '—' && v !== 'None' && v !== 'Ambient' && v !== 'Double' && v !== 'Single Phase' && v !== 'Three Phase') {
+                                    if (v && v !== '—' && v !== 'None' && v !== 'Ambient' && v !== 'Double' && v !== 'Single Phase' && v !== 'Three Phase' && !is1PhaseType(v) && !is3PhaseType(v)) {
                                       harvested.add(v);
                                     }
                                   });
@@ -3471,15 +3492,9 @@ export default function ElectricalTab({
             <button
               type="button"
               onClick={() => setShowPhysicalDb(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1e2538] hover:bg-[#2b354f] border border-[#2d3748] text-[#cbd5e0] transition-all cursor-pointer select-none"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#1e2538] hover:bg-[#2b354f] border border-[#2d3748] text-[#cbd5e0] transition-all cursor-pointer select-none h-8"
             >
-              <Eye size={14} /> Show Physical Cabinet & SLD Diagram ({currentBoard.circuits.filter(c => (c.cb || 0) > 0).reduce((acc, c) => {
-                const cid = (c.circuitId || '').trim();
-                if (cid && !acc.includes(cid)) {
-                  acc.push(cid);
-                }
-                return acc;
-              }, [] as string[]).length} MCBs)
+              <Eye size={14} /> Show Physical Cabinet & SLD Diagram ({new Set(currentBoard.circuits.map((c, idx) => (c.circuitId || `C${idx + 1}`).trim()).filter(Boolean)).size} MCBs)
             </button>
           )}
         </div>
@@ -3487,6 +3502,10 @@ export default function ElectricalTab({
         <AnimatePresence>
           {showPhysicalDb && (() => {
             const lightingSubCircuitMap = getLightingSubCircuitMap(currentBoard.circuits);
+
+            const getEffectiveCircuitCB = (c: Circuit) => {
+              return getCircuitCBRating(c, settings, currentBoard.phase === '3-Phase');
+            };
 
             // Group circuits by their circuitId
             const uniqueCircuitsMap = new Map<string, {
@@ -3500,14 +3519,17 @@ export default function ElectricalTab({
               subCircuitSummary: string;
             }>();
 
-            currentBoard.circuits.forEach(c => {
-              const rating = c.cb || 0;
-              if (rating <= 0) return;
-
-              const cid = (c.circuitId || '').trim();
+            currentBoard.circuits.forEach((c, idx) => {
+              const rating = getEffectiveCircuitCB(c);
+              const cid = (c.circuitId || `C${String(idx + 1).padStart(2, '0')}`).trim();
               if (!cid) return;
 
-              const isDedicated3Ph = c.dedicatedType === 'Three Phase' || (c.fixtureVariance && c.fixtureVariance.includes('3ph'));
+              const is3PhCircuit =
+                (c.loadType === 'Dedicated' && is3PhaseType(c.dedicatedType)) ||
+                (c.loadType === 'Air Conditioner' && is3PhaseType(c.phase)) ||
+                is3PhaseType(c.phase) ||
+                (c.fixtureVariance && c.fixtureVariance.includes('3ph')) ||
+                Boolean((c as any).isThreePhase);
               const subInfo = lightingSubCircuitMap[c.id];
 
               if (!uniqueCircuitsMap.has(cid)) {
@@ -3517,7 +3539,7 @@ export default function ElectricalTab({
                   loadTypes: [c.loadType || ''],
                   cb: rating,
                   phase: c.phase || 'L',
-                  isThreePhase: isDedicated3Ph,
+                  isThreePhase: is3PhCircuit,
                   wattage: getCircuitWatts(c),
                   subCircuitSummary: subInfo?.summary || ''
                 });
@@ -3533,7 +3555,7 @@ export default function ElectricalTab({
                 if (rating > existing.cb) {
                   existing.cb = rating;
                 }
-                if (isDedicated3Ph) {
+                if (is3PhCircuit) {
                   existing.isThreePhase = true;
                 }
                 if (subInfo?.summary && !existing.subCircuitSummary.includes(subInfo.summary)) {
@@ -3566,13 +3588,17 @@ export default function ElectricalTab({
               const ltLower = loadTypeDisplay.toLowerCase();
               const cidLower = item.circuitId.toLowerCase();
 
-              const isLightning = ltLower.includes('lightning') || cidLower.includes('lightning') || cidLower.includes('spd');
+              const isLightning = ltLower.includes('lightning') || cidLower.includes('lightning') || cidLower.includes('spd') || ltLower.includes('spd') || ltLower.includes('arrester');
               const isLighting = !isLightning && (ltLower.includes('light') || ltLower.includes('lamp') || ltLower.includes('led') || cidLower.startsWith('l') || cidLower.includes('ltg'));
+              const isAC = !isLightning && !isLighting && (ltLower.includes('air') || ltLower.includes('ac') || ltLower.includes('hvac') || ltLower.includes('cooler') || cidLower.startsWith('ac') || cidLower.includes('hvac'));
+              const isDedicated = !isLightning && !isLighting && !isAC && (ltLower.includes('dedicated') || item.loadTypes.includes('Dedicated'));
+
+              const calculatedWire = isLightning ? '10.0' : isLighting ? '1.5' : (isAC || isDedicated) ? (item.cb >= 32 ? '6.0' : '4.0') : '2.5';
 
               if (item.isThreePhase) {
-                dbSlots.push({ circuitId: item.circuitId, room: roomDisplay, loadType: loadTypeDisplay, cb: item.cb, phase: 'R', isThreePhase: true, wire: '4.0', wattage: item.wattage, subCircuitSummary: item.subCircuitSummary });
-                dbSlots.push({ circuitId: item.circuitId, room: roomDisplay, loadType: loadTypeDisplay, cb: item.cb, phase: 'Y', isThreePhase: true, wire: '4.0', wattage: item.wattage, subCircuitSummary: item.subCircuitSummary });
-                dbSlots.push({ circuitId: item.circuitId, room: roomDisplay, loadType: loadTypeDisplay, cb: item.cb, phase: 'B', isThreePhase: true, wire: '4.0', wattage: item.wattage, subCircuitSummary: item.subCircuitSummary });
+                dbSlots.push({ circuitId: item.circuitId, room: roomDisplay, loadType: loadTypeDisplay, cb: item.cb, phase: 'R', isThreePhase: true, wire: calculatedWire, wattage: item.wattage, subCircuitSummary: item.subCircuitSummary });
+                dbSlots.push({ circuitId: item.circuitId, room: roomDisplay, loadType: loadTypeDisplay, cb: item.cb, phase: 'Y', isThreePhase: true, wire: calculatedWire, wattage: item.wattage, subCircuitSummary: item.subCircuitSummary });
+                dbSlots.push({ circuitId: item.circuitId, room: roomDisplay, loadType: loadTypeDisplay, cb: item.cb, phase: 'B', isThreePhase: true, wire: calculatedWire, wattage: item.wattage, subCircuitSummary: item.subCircuitSummary });
               } else {
                 dbSlots.push({
                   circuitId: item.circuitId,
@@ -3581,7 +3607,7 @@ export default function ElectricalTab({
                   cb: item.cb,
                   phase: item.phase || 'L',
                   isThreePhase: false,
-                  wire: isLightning ? '10.0' : isLighting ? '1.5' : '2.5',
+                  wire: calculatedWire,
                   wattage: item.wattage,
                   subCircuitSummary: item.subCircuitSummary
                 });
@@ -3591,33 +3617,46 @@ export default function ElectricalTab({
             const totalUsedPoles = dbSlots.length;
             const standardWays = [4, 6, 8, 12, 18, 24, 36, 48, 72];
             const recommendedWays = standardWays.find(w => w >= totalUsedPoles) || 72;
-            const sparePoles = recommendedWays - totalUsedPoles;
-
-            const lightingPoles = dbSlots.filter(s => {
-              const lt = (s.loadType || '').toLowerCase();
-              const cid = (s.circuitId || '').toLowerCase();
-              return (lt.includes('light') || cid.startsWith('l') || cid.includes('ltg')) && !lt.includes('lightning') && !cid.includes('lightning');
-            }).length;
+            const sparePoles = Math.max(0, recommendedWays - totalUsedPoles);
 
             const lightningPoles = dbSlots.filter(s => {
               const lt = (s.loadType || '').toLowerCase();
               const cid = (s.circuitId || '').toLowerCase();
-              return lt.includes('lightning') || cid.includes('lightning') || cid.includes('spd');
+              return lt.includes('lightning') || cid.includes('lightning') || cid.includes('spd') || lt.includes('spd') || lt.includes('arrester');
             }).length;
 
-            const powerSocketsPoles = dbSlots.filter(s => {
+            const lightingPoles = dbSlots.filter(s => {
               const lt = (s.loadType || '').toLowerCase();
-              return lt.includes('socket') || lt.includes('power') || lt.includes('plug');
+              const cid = (s.circuitId || '').toLowerCase();
+              const isLightning = lt.includes('lightning') || cid.includes('lightning') || cid.includes('spd') || lt.includes('spd') || lt.includes('arrester');
+              return !isLightning && (lt.includes('light') || lt.includes('lamp') || lt.includes('led') || cid.startsWith('l') || cid.includes('ltg'));
             }).length;
 
             const acHvacPoles = dbSlots.filter(s => {
               const lt = (s.loadType || '').toLowerCase();
-              return lt.includes('air') || lt.includes('ac') || lt.includes('hvac') || lt.includes('cooler');
+              const cid = (s.circuitId || '').toLowerCase();
+              const isLightning = lt.includes('lightning') || cid.includes('lightning') || cid.includes('spd') || lt.includes('spd') || lt.includes('arrester');
+              const isLighting = !isLightning && (lt.includes('light') || lt.includes('lamp') || lt.includes('led') || cid.startsWith('l') || cid.includes('ltg'));
+              return !isLightning && !isLighting && (lt.includes('air') || lt.includes('ac') || lt.includes('hvac') || lt.includes('cooler') || cid.startsWith('ac') || cid.includes('hvac'));
+            }).length;
+
+            const powerSocketsPoles = dbSlots.filter(s => {
+              const lt = (s.loadType || '').toLowerCase();
+              const cid = (s.circuitId || '').toLowerCase();
+              const isLightning = lt.includes('lightning') || cid.includes('lightning') || cid.includes('spd') || lt.includes('spd') || lt.includes('arrester');
+              const isLighting = !isLightning && (lt.includes('light') || lt.includes('lamp') || lt.includes('led') || cid.startsWith('l') || cid.includes('ltg'));
+              const isAC = !isLightning && !isLighting && (lt.includes('air') || lt.includes('ac') || lt.includes('hvac') || lt.includes('cooler') || cid.startsWith('ac') || cid.includes('hvac'));
+              return !isLightning && !isLighting && !isAC && (lt.includes('socket') || lt.includes('power') || lt.includes('plug') || lt.includes('receptacle') || cid.startsWith('p') || cid.startsWith('sk') || cid.includes('sock'));
             }).length;
 
             const dedicatedPoles = dbSlots.filter(s => {
               const lt = (s.loadType || '').toLowerCase();
-              return lt.includes('dedicated') || s.loadType === 'Dedicated';
+              const cid = (s.circuitId || '').toLowerCase();
+              const isLightning = lt.includes('lightning') || cid.includes('lightning') || cid.includes('spd') || lt.includes('spd') || lt.includes('arrester');
+              const isLighting = !isLightning && (lt.includes('light') || lt.includes('lamp') || lt.includes('led') || cid.startsWith('l') || cid.includes('ltg'));
+              const isAC = !isLightning && !isLighting && (lt.includes('air') || lt.includes('ac') || lt.includes('hvac') || lt.includes('cooler') || cid.startsWith('ac') || cid.includes('hvac'));
+              const isPower = !isLightning && !isLighting && !isAC && (lt.includes('socket') || lt.includes('power') || lt.includes('plug') || lt.includes('receptacle') || cid.startsWith('p') || cid.startsWith('sk') || cid.includes('sock'));
+              return !isLightning && !isLighting && !isAC && !isPower;
             }).length;
 
             return (
@@ -4193,7 +4232,7 @@ export default function ElectricalTab({
                             <div className="flex items-center gap-2">
                               <span className="p-1 rounded bg-cyan-500/10 text-cyan-400 font-bold text-xs">📋</span>
                               <h5 className="text-xs font-extrabold text-cyan-300 tracking-wide uppercase font-mono">
-                                Circuit ID Summary Schedule — {currentBoard.name} ({Array.from(uniqueCircuitsMap.values()).length} Circuits)
+                                Circuit ID Summary Schedule — {currentBoard.name} ({isThreePhase ? '3 Phase' : '1 Phase'}) ({Array.from(uniqueCircuitsMap.values()).length} Circuits)
                               </h5>
                             </div>
                             <div className="flex items-center gap-2 text-[10px] font-mono">
@@ -4233,7 +4272,7 @@ export default function ElectricalTab({
 
                                   if (item.isThreePhase) {
                                     phaseLetter = '3PH';
-                                    phaseName = 'Three Phase';
+                                    phaseName = '3 Phase';
                                     phaseColor = 'text-purple-300';
                                   } else if (item.phase === 'Y') {
                                     phaseLetter = 'Y';
@@ -4630,10 +4669,9 @@ export default function ElectricalTab({
                     const isSocketsOrDedicated = c.loadType === 'Sockets' || c.loadType === 'Dedicated';
                     const isLighting = c.loadType === 'Lighting';
                     const isThreePhaseDedicated =
-                      (c.loadType === 'Dedicated' && c.dedicatedType === 'Three Phase') ||
-                      (c.loadType === 'Air Conditioner' && (c.phase === 'Three Phase' || c.phase === '3-Phase')) ||
-                      c.phase === 'Three Phase' ||
-                      c.phase === '3-Phase';
+                      (c.loadType === 'Dedicated' && is3PhaseType(c.dedicatedType)) ||
+                      (c.loadType === 'Air Conditioner' && is3PhaseType(c.phase)) ||
+                      is3PhaseType(c.phase);
 
                     const isDuplicatedId = circuitIdsTracker[c.circuitId] !== undefined;
                     if (!isDuplicatedId) {
@@ -4689,15 +4727,18 @@ export default function ElectricalTab({
                     const totalWatts = isLighting ? getCircuitWatts(c) : (c.watts || 0) * activeQty;
                     const displayTotalWattsVal = totalWatts;
 
+                    const acWatts = (c.watts && c.watts > 0) ? c.watts : (c.acHp ? Math.round(c.acHp * 1500) : 3000);
+                    const wattsForCB = isLighting ? totalWatts : (c.loadType === 'Air Conditioner' ? acWatts : (c.watts || 0));
+
                     let calculatedCircuitCB = calculateCB(
-                      isLighting ? totalWatts : c.watts,
+                      wattsForCB,
                       isLighting ? 1 : activeQty,
                       isThreePhaseDedicated ? systemVoltage : settings.voltage,
                       settings.powerFactor,
                       isThreePhase,
                       c.loadType
                     );
-                    if (c.loadType === 'Air Conditioner' && c.cb) {
+                    if (c.cb && c.cb > 0) {
                       calculatedCircuitCB = c.cb;
                     }
 
@@ -4985,26 +5026,28 @@ export default function ElectricalTab({
                           )}
                           {c.loadType === 'Dedicated' && (
                             <select
-                              value={c.dedicatedType || 'Single Phase'}
+                              value={c.dedicatedType || '1 Phase'}
                               onChange={e => {
                                 const val = e.target.value;
-                                if (val === 'Single Phase') {
+                                if (is1PhaseType(val)) {
                                   updateCircuitFields(c.id, {
                                     dedicatedType: val,
                                     cableCores: '3 Cores',
                                     fixtureVariance: 'None'
                                   });
-                                } else if (val === 'Three Phase') {
+                                } else if (is3PhaseType(val)) {
                                   updateCircuitFields(c.id, {
                                     dedicatedType: val,
                                     cableCores: '4 Cores',
                                     fixtureVariance: '13A 3ph Industrial'
                                   });
+                                } else {
+                                  updateCircuitField(c.id, 'dedicatedType', val);
                                 }
                               }}
                               className="w-full max-w-full outline-none bg-transparent border border-[#2d3748] rounded px-1.5 py-0.5 text-xs text-purple-300"
                             >
-                              {dynamic_DEDICATED_TYPES.filter(t => isThreePhase || t !== 'Three Phase').map(t => (
+                              {dynamic_DEDICATED_TYPES.filter(t => isThreePhase || !is3PhaseType(t)).map(t => (
                                 <option key={t} value={t}>
                                   {t}
                                 </option>
@@ -5103,7 +5146,7 @@ export default function ElectricalTab({
                                   </option>
                                 ))}
                               </select>
-                              {c.dedicatedType === 'Three Phase' && (
+                              {is3PhaseType(c.dedicatedType) && (
                                 <select
                                   value={c.fixtureVariance || '13A 3ph Industrial'}
                                   onChange={e => updateCircuitField(c.id, 'fixtureVariance', e.target.value)}
@@ -5265,10 +5308,9 @@ export default function ElectricalTab({
                             ) : (() => {
                               const currentSelectedPhase = Pi.includes(c.phase) ? c.phase : (() => {
                                 const is3PhLocal = (oc: any) =>
-                                  (oc.loadType === 'Dedicated' && oc.dedicatedType === 'Three Phase') ||
-                                  (oc.loadType === 'Air Conditioner' && (oc.phase === 'Three Phase' || oc.phase === '3-Phase')) ||
-                                  oc.phase === 'Three Phase' ||
-                                  oc.phase === '3-Phase';
+                                  (oc.loadType === 'Dedicated' && is3PhaseType(oc.dedicatedType)) ||
+                                  (oc.loadType === 'Air Conditioner' && is3PhaseType(oc.phase)) ||
+                                  is3PhaseType(oc.phase);
                                 const nonExplicitSinglePhases = currentBoard.circuits.filter(
                                   oc => !is3PhLocal(oc) && !Pi.includes(oc.phase || '')
                                 );
@@ -5276,28 +5318,35 @@ export default function ElectricalTab({
                                 return Pi[idx !== -1 ? idx % 3 : 0];
                               })();
 
-                              const pColor = PHASE_COLORS[currentSelectedPhase] || '#ff0017';
+                              const isY = currentSelectedPhase === 'Y';
+                              const isB = currentSelectedPhase === 'B';
+                              const pBgColor = isY ? '#eab308' : isB ? '#2563eb' : '#dc2626';
+                              const pTextColor = isY ? '#000000' : '#ffffff';
+                              const pBorderColor = isY ? '#fde047' : isB ? '#60a5fa' : '#f87171';
 
                               return (
                                 <select
                                   value={currentSelectedPhase}
                                   onChange={e => updateCircuitField(c.id, 'phase', e.target.value)}
-                                  className="w-full bg-[#0f1117] font-black border rounded px-1 py-0.5 text-xs outline-none cursor-pointer text-center focus:border-blue-500 shadow-sm"
+                                  className="w-full font-black border rounded px-1 py-0.5 text-xs outline-none cursor-pointer text-center focus:ring-1 focus:ring-white shadow-sm transition-colors"
                                   style={{
-                                    color: pColor,
-                                    backgroundColor: `${pColor}20`,
-                                    borderColor: `${pColor}60`
+                                    color: pTextColor,
+                                    backgroundColor: pBgColor,
+                                    borderColor: pBorderColor
                                   }}
                                 >
                                   {Pi.map(phaseOption => {
-                                    const optColor = PHASE_COLORS[phaseOption] || '#ffffff';
+                                    const isOptY = phaseOption === 'Y';
+                                    const isOptB = phaseOption === 'B';
+                                    const optBg = isOptY ? '#eab308' : isOptB ? '#2563eb' : '#dc2626';
+                                    const optFg = isOptY ? '#000000' : '#ffffff';
                                     return (
                                       <option
                                         key={phaseOption}
                                         value={phaseOption}
                                         style={{
-                                          color: optColor,
-                                          backgroundColor: '#0f172a',
+                                          color: optFg,
+                                          backgroundColor: optBg,
                                           fontWeight: 'bold'
                                         }}
                                       >
@@ -5313,8 +5362,10 @@ export default function ElectricalTab({
 
                         {/* 18. CB Sizing */}
                         <td className="p-2 text-center font-bold">
-                          <span
-                            className={
+                          <select
+                            value={c.cb ? String(c.cb) : ''}
+                            onChange={e => updateCircuitField(c.id, 'cb', e.target.value ? Number(e.target.value) : undefined)}
+                            className={`bg-transparent border border-[#2d3748] rounded px-1.5 py-0.5 text-xs text-center font-bold focus:border-blue-500 outline-none cursor-pointer ${
                               calculatedCircuitCB === 6
                                 ? 'text-white'
                                 : calculatedCircuitCB >= 63
@@ -5322,10 +5373,15 @@ export default function ElectricalTab({
                                 : calculatedCircuitCB >= 32
                                 ? 'text-orange-400'
                                 : 'text-green-400'
-                            }
+                            }`}
                           >
-                            {calculatedCircuitCB}A
-                          </span>
+                            <option value="" className="bg-[#1a202c] text-green-400 font-bold">Auto ({calculatedCircuitCB}A)</option>
+                            {dynamic_CB_SIZES.map(rating => (
+                              <option key={rating} value={rating} className="bg-[#1a202c] text-white font-normal">
+                                {rating}A
+                              </option>
+                            ))}
+                          </select>
                         </td>
 
                         {/* 19. Wire Size */}
@@ -5557,7 +5613,7 @@ export default function ElectricalTab({
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 15 }}
                 transition={{ type: "spring", duration: 0.3 }}
-                className="bg-[#0d1322]/95 backdrop-blur-sm border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/80 max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden text-white my-8"
+                className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/80 max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden text-white my-8 animate-in zoom-in-95 duration-200"
               >
               {/* Header */}
               <div className="px-6 py-4 border-b border-slate-800/80 flex justify-between items-center bg-[#12192b]/95 shrink-0">
@@ -6004,13 +6060,13 @@ export default function ElectricalTab({
                             setNewCircuitForm(p => ({
                               ...p,
                               dedicatedType: val,
-                              cableCores: val === 'Three Phase' ? '4 Cores' : '3 Cores',
-                              fixtureVariance: val === 'Three Phase' ? '13A 3ph Industrial' : 'None'
+                              cableCores: is3PhaseType(val) ? '4 Cores' : '3 Cores',
+                              fixtureVariance: is3PhaseType(val) ? '13A 3ph Industrial' : 'None'
                             }));
                           }}
                           className="w-full bg-[#0f1117] border border-[#2d3748] rounded-md text-white p-2 text-xs outline-none focus:border-blue-500"
                         >
-                          {dynamic_DEDICATED_TYPES.filter(t => isThreePhase || t !== 'Three Phase').map(t => (
+                          {dynamic_DEDICATED_TYPES.filter(t => isThreePhase || !is3PhaseType(t)).map(t => (
                             <option key={t} value={t}>{t}</option>
                           ))}
                         </select>
@@ -6029,7 +6085,7 @@ export default function ElectricalTab({
                         </select>
                       </div>
 
-                      {newCircuitForm.dedicatedType === 'Three Phase' && (
+                      {is3PhaseType(newCircuitForm.dedicatedType) && (
                         <div className="md:col-span-2">
                           <label className="block text-[10px] text-gray-400 mb-1 uppercase font-semibold">Type Variance</label>
                           <select
@@ -6089,27 +6145,42 @@ export default function ElectricalTab({
                     />
                   </div>
 
-                  {isThreePhase && (
-                    <div>
-                      <label className="block text-[10px] text-gray-400 mb-1 uppercase font-semibold">Phase Connection</label>
-                      <select
-                        value={newCircuitForm.phase}
-                        onChange={e => setNewCircuitForm(p => ({ ...p, phase: e.target.value }))}
-                        className="w-full bg-[#0f1117] border border-[#2d3748] rounded-md p-2 text-xs outline-none focus:border-blue-500 font-extrabold cursor-pointer text-center"
-                        style={{
-                          color: PHASE_COLORS[newCircuitForm.phase] || '#ff0017',
-                          backgroundColor: `${PHASE_COLORS[newCircuitForm.phase] || '#ff0017'}20`,
-                          borderColor: `${PHASE_COLORS[newCircuitForm.phase] || '#ff0017'}60`
-                        }}
-                      >
-                        {Pi.map(phaseOption => (
-                          <option key={phaseOption} value={phaseOption} style={{ color: PHASE_COLORS[phaseOption], backgroundColor: '#0f172a', fontWeight: 'bold' }}>
-                            {phaseOption}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+                  {isThreePhase && (() => {
+                    const selPhase = newCircuitForm.phase || 'R';
+                    const isY = selPhase === 'Y';
+                    const isB = selPhase === 'B';
+                    const pBgColor = isY ? '#eab308' : isB ? '#2563eb' : '#dc2626';
+                    const pTextColor = isY ? '#000000' : '#ffffff';
+                    const pBorderColor = isY ? '#fde047' : isB ? '#60a5fa' : '#f87171';
+
+                    return (
+                      <div>
+                        <label className="block text-[10px] text-gray-400 mb-1 uppercase font-semibold">Phase Connection</label>
+                        <select
+                          value={newCircuitForm.phase}
+                          onChange={e => setNewCircuitForm(p => ({ ...p, phase: e.target.value }))}
+                          className="w-full border rounded-md p-2 text-xs outline-none focus:ring-1 focus:ring-white font-extrabold cursor-pointer text-center transition-colors"
+                          style={{
+                            color: pTextColor,
+                            backgroundColor: pBgColor,
+                            borderColor: pBorderColor
+                          }}
+                        >
+                          {Pi.map(phaseOption => {
+                            const isOptY = phaseOption === 'Y';
+                            const isOptB = phaseOption === 'B';
+                            const optBg = isOptY ? '#eab308' : isOptB ? '#2563eb' : '#dc2626';
+                            const optFg = isOptY ? '#000000' : '#ffffff';
+                            return (
+                              <option key={phaseOption} value={phaseOption} style={{ color: optFg, backgroundColor: optBg, fontWeight: 'bold' }}>
+                                {phaseOption}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                    );
+                  })()}
 
                   <div>
                     <label className="block text-[10px] text-gray-400 mb-1 uppercase font-semibold">Cable Length (m)</label>

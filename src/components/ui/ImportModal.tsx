@@ -112,7 +112,7 @@ export default function ImportModal({ boardName, boardPhase, existingCount, onIm
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/10 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm"
+      className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center p-4 z-[9999] animate-in fade-in duration-200"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <motion.div
@@ -120,11 +120,11 @@ export default function ImportModal({ boardName, boardPhase, existingCount, onIm
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, y: 15 }}
         transition={{ type: 'spring', damping: 20, stiffness: 250 }}
-        className="bg-[#0d1322]/95 backdrop-blur-sm border border-slate-700/60 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl shadow-black/80"
+        className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl shadow-black/80 relative animate-in zoom-in-95 duration-200"
       >
-        <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
           <div>
-            <div className="font-bold text-base text-slate-100 flex items-center gap-2">📥 Import Circuits to {boardName}</div>
+            <div className="font-bold text-sm text-slate-100 flex items-center gap-2">📥 Import Circuits to {boardName}</div>
             <div className="text-xs text-slate-400 mt-1">
               Phase Mode: <span className="font-semibold text-cyan-400">{boardPhase}</span>
               {existingCount > 0 && (
@@ -142,9 +142,10 @@ export default function ImportModal({ boardName, boardPhase, existingCount, onIm
           </button>
         </div>
 
-        {/* Drag & Drop Zone */}
-        <div
-          onClick={() => fileInputRef.current?.click()}
+        <div className="p-6 overflow-y-auto space-y-4 flex-1">
+          {/* Drag & Drop Zone */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
           onDragOver={e => e.preventDefault()}
           onDrop={e => {
             e.preventDefault();
@@ -289,6 +290,7 @@ export default function ImportModal({ boardName, boardPhase, existingCount, onIm
           <span style={{ color: "#718096" }}>
             Note: Load Types are mapped to "Lighting", "Sockets", "Air Conditioner", "Dedicated". Cores carry Red/Black/Green wire color stats!
           </span>
+        </div>
         </div>
       </motion.div>
     </motion.div>

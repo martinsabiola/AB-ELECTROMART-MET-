@@ -904,8 +904,15 @@ export default function ProfileTab({
 
       {/* CHANGE PASSWORD MODAL CONTAINER */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/10 backdrop-blur-sm">
-          <div className="w-full max-w-[400px] bg-[#0d1322]/95 backdrop-blur-sm border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/80 overflow-hidden flex flex-col">
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPasswordModal(false);
+            }
+          }}
+        >
+          <div className="w-full max-w-[400px] bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/80 overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center px-5 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
               <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider flex items-center gap-2">
                 <Key className="w-4 h-4 text-cyan-400" /> Change Sizing Password

@@ -2199,16 +2199,23 @@ export default function GeneratorTab({
 
       {/* ADD NEW STEP MODAL */}
       {addStepModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#0d1322] border border-cyan-500/40 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800 bg-[#12192b]">
-              <h3 className="font-bold text-white text-base flex items-center gap-2">
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center p-4 z-[9999] animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setAddStepModalOpen(false);
+            }
+          }}
+        >
+          <div className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl w-full max-w-md shadow-2xl shadow-black/80 overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
+              <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
                 <span>➕</span> Add New Workflow Step
               </h3>
               <button
                 type="button"
                 onClick={() => setAddStepModalOpen(false)}
-                className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-sm font-bold cursor-pointer"
+                className="w-7 h-7 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/60 flex items-center justify-center text-sm font-bold transition-all cursor-pointer"
               >
                 ✕
               </button>
@@ -2278,10 +2285,17 @@ export default function GeneratorTab({
 
       {/* ADD/EDIT LOAD MODAL */}
       {addModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/10 backdrop-blur-sm">
-          <div className="bg-[#0d1322]/95 backdrop-blur-sm border border-slate-700/60 rounded-2xl w-full max-w-xl shadow-2xl shadow-black/80 overflow-hidden flex flex-col">
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center p-4 z-[9999] animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setAddModalOpen(false);
+            }
+          }}
+        >
+          <div className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl w-full max-w-xl shadow-2xl shadow-black/80 overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
-              <h3 className="font-bold text-slate-100 text-base flex items-center gap-2">
+              <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
                 <span>⚡</span> {editingId ? 'Edit Connected Load Item' : 'Add New Connected Load Item'}
               </h3>
               <button

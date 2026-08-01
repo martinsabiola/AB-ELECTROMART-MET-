@@ -1283,8 +1283,17 @@ export default function App() {
             <button
               onClick={() => setSettingsOpen(prev => !prev)}
               className="px-3 py-1.5 rounded bg-[#2b6cb0] hover:bg-[#3182ce] text-white cursor-pointer text-xs font-semibold flex items-center gap-1 transition-colors"
+              title="Open Project Meta Settings"
             >
               <span>⚙️</span> Settings
+            </button>
+
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('open-sizing-params-sidebar'))}
+              className="px-3 py-1.5 rounded bg-[#1e3a5f] hover:bg-[#2b4c7e] text-sky-200 border border-sky-500/50 cursor-pointer text-xs font-semibold flex items-center gap-1 transition-colors"
+              title="Open Sizing Parameters Panel"
+            >
+              <span>📐</span> Sizing Parameters
             </button>
 
             {/* User Session card */}
@@ -1307,7 +1316,7 @@ export default function App() {
         </div>
 
         {/* Global tab rail */}
-        <div className="flex bg-[#090c14] border-b border-[#1b2333] overflow-x-auto select-none items-center">
+        <div className="flex bg-[#090c14] border-b border-[#1b2333] overflow-x-auto no-scrollbar select-none items-center">
           {tabs.map((tab, idx) => {
             const isBuiltInCore = ['electrical', 'hvac', 'plumbing', 'fire', 'solar', 'generator', 'smarthome', 'cctv', 'summary', 'profile'].includes(tab.id) && tab.id !== 'selfdesign';
 
@@ -1408,18 +1417,25 @@ export default function App() {
 
       {/* WINDOWS KEYBOARD SHORTCUTS CHEAT SHEET MODAL */}
       {isShortcutsModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md select-none">
-          <div className="bg-[#0c101c] border border-cyan-500/50 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center p-4 z-[9999] animate-in fade-in duration-200 select-none"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsShortcutsModalOpen(false);
+            }
+          }}
+        >
+          <div className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl w-full max-w-2xl max-h-[90vh] shadow-2xl shadow-black/80 relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800 bg-[#121829] border-t-2 border-t-cyan-400">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
               <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
                 <Keyboard className="w-5 h-5 text-amber-400" /> Windows Keyboard Short Keys Reference
               </h3>
               <button
                 onClick={() => setIsShortcutsModalOpen(false)}
-                className="text-gray-400 hover:text-white text-xs font-bold bg-gray-800/80 hover:bg-gray-700 px-2.5 py-1 rounded-lg transition-colors"
+                className="w-7 h-7 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/60 flex items-center justify-center text-sm font-bold transition-all cursor-pointer"
               >
-                ✕ Esc
+                ✕
               </button>
             </div>
 
@@ -1532,17 +1548,27 @@ export default function App() {
         </div>
       )}
 
+      {/* SIZING PARAMETERS OVERLAY FORM */}
+      <SizingParamsSidebar settings={settings} setSettings={setSettings} activeTab={activeTab} />
+
       {/* ADD NEW TAB MODAL */}
       {isAddTabModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm select-none">
-          <div className="bg-[#0d1322]/95 border border-slate-700/60 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800 bg-[#12192b]/95">
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center p-4 z-[9999] animate-in fade-in duration-200 select-none"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsAddTabModalOpen(false);
+            }
+          }}
+        >
+          <div className="bg-[#0d1322]/20 backdrop-blur-md border border-slate-700/60 rounded-2xl w-full max-w-md max-h-[90vh] shadow-2xl shadow-black/80 relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800/80 bg-[#12192b]/95 shrink-0">
               <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
                 <Plus className="w-4 h-4 text-cyan-400" /> Create New Navigation Tab
               </h3>
               <button
                 onClick={() => setIsAddTabModalOpen(false)}
-                className="text-gray-400 hover:text-white text-xs font-bold"
+                className="w-7 h-7 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/60 flex items-center justify-center text-sm font-bold transition-all cursor-pointer"
               >
                 ✕
               </button>
